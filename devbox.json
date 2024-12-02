@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.6/.schema/devbox.schema.json",
+  "packages": [
+    "zig@0.13.0",
+    "zls@latest",
+    "watchexec@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'Welcome to devbox!' > /dev/null"
+    ],
+    "scripts": {
+      "fast": [
+        "zig build -Doptimize=ReleaseFast run"
+      ],
+      "safe": [
+        "zig build -Doptimize=ReleaseSafe run"
+      ],
+      "test": [
+        "zig build -Doptimize=Debug test"
+      ]
+    }
+  }
+}
