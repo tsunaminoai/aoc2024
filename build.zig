@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(lib);
     const run_all_step = b.step("run", "Run all days");
 
-    for (1..3) |n| {
+    for (1..4) |n| {
         const exe = b.addExecutable(.{
             .name = b.fmt("aoc_{}", .{n}),
             .root_source_file = b.path("src/main.zig"),
