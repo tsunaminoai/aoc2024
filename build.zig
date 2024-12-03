@@ -2,8 +2,12 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
-
     const optimize = b.standardOptimizeOption(.{});
+
+    const mvzr_dep = b.dependency("mvzr", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
     const lib = b.addStaticLibrary(.{
         .name = "aoc",
@@ -28,6 +32,7 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
             .root_source_file = b.path(b.fmt("src/2024/day{}.zig", .{n})),
         });
+        day_mod.root_module.addImport("mvzr", mvzr_dep.module("mvzr"));
         exe.linkLibrary(lib);
         exe.linkLibrary(day_mod);
         exe.root_module.addImport("day", &day_mod.root_module);
