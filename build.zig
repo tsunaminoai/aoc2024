@@ -3,6 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const test_step = b.step("test", "Run unit tests");
 
     const mvzr_dep = b.dependency("mvzr", .{
         .target = target,
@@ -26,11 +27,12 @@ pub fn build(b: *std.Build) !void {
             .target = target,
             .optimize = optimize,
         });
+        const day_file = b.fmt("src/2024/day{}.zig", .{n});
         const day_mod = b.addSharedLibrary(.{
             .name = "day",
             .target = target,
             .optimize = optimize,
-            .root_source_file = b.path(b.fmt("src/2024/day{}.zig", .{n})),
+            .root_source_file = b.path(day_file),
         });
         day_mod.root_module.addImport("mvzr", mvzr_dep.module("mvzr"));
         exe.linkLibrary(lib);
@@ -42,6 +44,17 @@ pub fn build(b: *std.Build) !void {
         const run_step = b.step(b.fmt("run_{}", .{n}), b.fmt("Run the day {}", .{n}));
         run_step.dependOn(&run_cmd.step);
         run_all_step.dependOn(run_step);
+
+        const day_tests = b.addTest(.{
+            .root_source_file = b.path(day_file),
+            .target = target,
+            .optimize = optimize,
+        });
+        day_tests.root_module.addImport("mvzr", mvzr_dep.module("mvzr"));
+
+        const run_day_tests = b.addRunArtifact(day_tests);
+
+        test_step.dependOn(&run_day_tests.step);
     }
 
     // Creates a step for unit testing. This only builds the test executable
@@ -65,7 +78,7 @@ pub fn build(b: *std.Build) !void {
     // Similar to creating the run step earlier, this exposes a `test` step to
     // the `zig build --help` menu, providing a way for the user to request
     // running the unit tests.
-    const test_step = b.step("test", "Run unit tests");
+
     test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
 }

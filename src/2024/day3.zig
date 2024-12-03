@@ -7,8 +7,12 @@ pub const Answer1 = 0;
 pub const Answer2 = 0;
 
 pub fn part1(in: []const u8) f32 {
+    const regex = mvzr.Regex.compile("mul\\(([0-9]+),([0-9]+)\\)") orelse unreachable;
     const ret: f32 = 0;
-    _ = in;
+    var iter = regex.iterator(in);
+    while (iter.next()) |match| {
+        std.debug.print("{any}\n", .{match});
+    }
     return ret;
 }
 pub fn part2(in: []const u8) f32 {
