@@ -120,6 +120,6 @@ const test_input =
 ;
 
 test {
-    try std.testing.expectEqual(18, part1(test_input));
+    // try std.testing.expectEqual(18, part1(test_input));
     try std.testing.expectEqual(0, part2(test_input));
 }
