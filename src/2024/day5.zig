@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const DayNumber = 5;
 
-pub const Answer1 = 0;
+pub const Answer1 = 5713;
 pub const Answer2 = 0;
 
 pub fn part1(in: []const u8) f32 {
@@ -143,13 +143,13 @@ fn valid_updates(rules: []const Rule, updates: std.ArrayList(Update)) i32 {
 }
 fn valid_updates_middle_page_sum(rules: []const Rule, updates: std.ArrayList(Update)) i32 {
     var sum: i32 = 0;
-    for (updates.items) |update| {
+    up: for (updates.items) |update| {
         std.debug.print("Processing update '{any}'...", .{update.pages.items});
         const pages = update.pages.items;
-        rl: for (rules) |rule| {
+        for (rules) |rule| {
             if (!rule.update_obeys_rule(pages)) {
                 std.debug.print("..failed on {}\n", .{rule});
-                break :rl;
+                continue :up;
             }
         }
         const mid_page = @divFloor(pages.len, 2);
@@ -198,7 +198,7 @@ const test_input =
     \\61,13,29
     \\97,13,75,29,47
 ;
-const section_1 = 
+const section_1 =
     \\47|53
     \\97|13
     \\97|61
