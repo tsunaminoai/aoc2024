@@ -40,7 +40,7 @@ pub fn part1(in: []const u8) f32 {
             @intCast(grid_w),
             coord.init(x, y),
         )) |c| {
-            std.debug.print("{c}\t", .{c});
+            // std.debug.print("{c}\t", .{c});
             if (c == '\n') break :loop;
             if (c != 'X') continue :loop;
             kern: for (kernel) |k| {
