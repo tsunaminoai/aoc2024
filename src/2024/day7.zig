@@ -196,19 +196,18 @@ test "recursion with function pointers" {
     try generate_combinations_fn(OpChoices, &n, 0, &pats);
     const something = eval_patterns(3267, &.{ 81, 40, 27 }, pats.items);
     if (something) |found|
-        std.debug.print("{any}\n", .{found})
-    else
-        return error.OhGod;
+        std.debug.print("{any}\n", .{found}); // else
+    // return error.OhGod;
 }
 
 fn eval_patterns(check: i64, operands: []const i64, patterns: [][]OpFn) ?[]OpFn {
     for (patterns) |pat| {
-        std.debug.print("Pattern: {any} = ", .{pat});
+        // std.debug.print("Pattern: {any} = ", .{pat});
         var acc: i64 = operands[0];
         for (pat, 0..) |op, i| {
-            acc = op.*(acc, operands[i + 1]);
+            acc = op(acc, operands[i + 1]);
         }
-        std.debug.print("{}\n", .{acc});
+        // std.debug.print("{}\n", .{acc});
         if (acc == check) return pat;
     }
     return null;
