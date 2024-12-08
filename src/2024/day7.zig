@@ -78,6 +78,7 @@ const Equation = struct {
                 // std.debug.print("{} ", .{right});
 
                 acc = op(left, right);
+                // if (acc > self.result) return false;
                 // std.debug.print("= {}\n", .{acc});
             }
 
@@ -156,4 +157,59 @@ const test_input =
 test {
     try std.testing.expectEqual(3749, part1(test_input));
     try std.testing.expectEqual(0, part2(test_input));
+}
+
+fn generate_combinations_fn(
+    choices: []const OpFn,
+    combination: []OpFn,
+    pos: usize,
+    patterns: *Array([]OpFn),
+) !void {
+    if (pos == combination.len) {
+        try patterns.append(combination);
+        return;
+    }
+
+    for (choices) |choice_fn| {
+        combination[pos] = choice_fn;
+        try generate_combinations_fn(
+            choices,
+            combination,
+            pos + 1,
+            patterns,
+        );
+    }
+    return;
+}
+
+const OpFn = *const fn (i64, i64) i64;
+const OpChoices = &[_]OpFn{
+    &Add,
+    &Mul,
+};
+
+test "recursion with function pointers" {
+    var n: [2]OpFn = undefined;
+    // const choices = [_]ChoiceFunction{ choice0, choice1, choice2 };
+    var pats = Array([]OpFn).init(tst.allocator);
+    defer pats.deinit();
+    try generate_combinations_fn(OpChoices, &n, 0, &pats);
+    const something = eval_patterns(3267, &.{ 81, 40, 27 }, pats.items);
+    if (something) |found|
+        std.debug.print("{any}\n", .{found})
+    else
+        return error.OhGod;
+}
+
+fn eval_patterns(check: i64, operands: []const i64, patterns: [][]OpFn) ?[]OpFn {
+    for (patterns) |pat| {
+        std.debug.print("Pattern: {any} = ", .{pat});
+        var acc: i64 = operands[0];
+        for (pat, 0..) |op, i| {
+            acc = op.*(acc, operands[i + 1]);
+        }
+        std.debug.print("{}\n", .{acc});
+        if (acc == check) return pat;
+    }
+    return null;
 }
