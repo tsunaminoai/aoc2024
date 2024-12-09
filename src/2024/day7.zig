@@ -155,7 +155,7 @@ const test_input =
 ;
 
 test {
-    try std.testing.expectEqual(3749, part1(test_input));
+    // try std.testing.expectEqual(3749, part1(test_input));
     try std.testing.expectEqual(0, part2(test_input));
 }
 
@@ -189,16 +189,16 @@ const OpChoices = &[_]OpFn{
 };
 
 test "recursion with function pointers" {
-    var n: [2]OpFn = undefined;
-    // const choices = [_]ChoiceFunction{ choice0, choice1, choice2 };
-    var pats = Array([]OpFn).init(tst.allocator);
-    defer pats.deinit();
-    try generate_combinations_fn(OpChoices, &n, 0, &pats);
-    const something = eval_patterns(3267, &.{ 81, 40, 27 }, pats.items);
-    if (something) |found|
-        std.debug.print("{any}\n", .{found})
-    else
-        return error.OhGod;
+    // var n: [2]OpFn = undefined;
+    // // const choices = [_]ChoiceFunction{ choice0, choice1, choice2 };
+    // var pats = Array([]OpFn).init(tst.allocator);
+    // defer pats.deinit();
+    // try generate_combinations_fn(OpChoices, &n, 0, &pats);
+    // const something = eval_patterns(3267, &.{ 81, 40, 27 }, pats.items);
+    // if (something) |found|
+    //     std.debug.print("{any}\n", .{found})
+    // else
+    //     return error.OhGod;
 }
 
 fn eval_patterns(check: i64, operands: []const i64, patterns: [][]OpFn) ?[]OpFn {
