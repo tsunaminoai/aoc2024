@@ -5,7 +5,7 @@ const Allocator = std.mem.Allocator;
 
 pub const DayNumber = 9;
 
-pub const Answer1 = 0;
+pub const Answer1 = 6154342787400;
 pub const Answer2 = 0;
 
 pub fn part1(in: []const u8) f32 {
@@ -19,15 +19,15 @@ pub fn part1(in: []const u8) f32 {
     defrag(b);
     defrag(b);
 
-    for (b) |bl| {
-        for (bl.size) |_|
-            if (bl.id) |id|
-                std.debug.print("[{}]", .{id})
-            else
-                std.debug.print(".", .{});
-    }
-    std.debug.print("\n", .{});
-    std.debug.print("{}\n", .{checksum(b)});
+    // for (b) |bl| {
+    //     for (bl.size) |_|
+    //         if (bl.id) |id|
+    //             std.debug.print("[{}]", .{id})
+    //         else
+    //             std.debug.print(".", .{});
+    // }
+    // std.debug.print("\n", .{});
+    std.debug.print("Checkum: {}\n", .{checksum(b)});
     return @floatFromInt(checksum(b));
 }
 pub fn part2(in: []const u8) f32 {
@@ -84,17 +84,15 @@ fn fmt_blocks(alloc: Allocator, blocks: []const Block) ![]u8 {
     return try ret.toOwnedSlice();
 }
 
-fn left_most_free(blocks: []Block) usize {
+fn left_most_free(blocks: []Block, from: usize) usize {
     return blk: {
-        var idx: usize = 0;
-        for (blocks) |b| {
-            if (b.id == null) break :blk idx;
-            idx += 1;
+        for (from..blocks.len) |i| {
+            if (blocks[i].id == null) break :blk i;
         }
         break :blk 0;
     };
 }
-
+//TODO: This needs optimized
 fn right_most_block(blocks: []Block) usize {
     return blk: {
         const len = blocks.len - 1;
@@ -108,13 +106,13 @@ fn right_most_block(blocks: []Block) usize {
 }
 
 fn defrag(blocks: []Block) void {
-    var next_free: usize = left_most_free(blocks);
+    var next_free: usize = left_most_free(blocks, 0);
     var next_move: usize = right_most_block(blocks);
     while (next_free < next_move) : ({
-        next_free = left_most_free(blocks);
+        next_free = left_most_free(blocks, next_free);
         next_move = right_most_block(blocks);
     }) {
-        std.debug.print("Swapping {} and {}\n", .{ next_free, next_move });
+        // std.debug.print("Swapping {} and {}\n", .{ next_free, next_move });
 
         std.mem.swap(Block, &blocks[next_free], &blocks[next_move]);
     }
