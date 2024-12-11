@@ -21,15 +21,30 @@ pub fn part1(in: []const u8) f32 {
         if (number.len == 0) break;
         stones.append(std.fmt.parseInt(i64, number, 10) catch unreachable) catch unreachable;
     }
-    for (0..25) |_|
+    for (0..25) |i| {
         blink(&stones) catch unreachable;
-    std.debug.print("{}\n", .{stones.items.len});
+        std.debug.print("blink {} gets {} stones\n", .{ i, stones.items.len });
+    }
     return @floatFromInt(stones.items.len);
 }
 pub fn part2(in: []const u8) f32 {
-    const ret: f32 = 0;
-    _ = in;
-    return ret;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const alloc = gpa.allocator();
+
+    var stones = Array(i64).init(alloc);
+    defer stones.deinit();
+
+    var iter = std.mem.splitAny(u8, in, " \n");
+    while (iter.next()) |number| {
+        if (number.len == 0) break;
+        stones.append(std.fmt.parseInt(i64, number, 10) catch unreachable) catch unreachable;
+    }
+    for (0..75) |i| {
+        blink(&stones) catch unreachable;
+        std.debug.print("blink {} gets {} stones\n", .{ i, stones.items.len });
+    }
+    return @floatFromInt(stones.items.len);
 }
 
 pub fn blink(stones: *Array(i64)) !void {
