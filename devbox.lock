@@ -1,6 +1,127 @@
 {
   "lockfile_version": "1",
   "packages": {
+    "python312@latest": {
+      "last_modified": "2024-06-12T20:55:33Z",
+      "plugin_version": "0.0.4",
+      "resolved": "github:NixOS/nixpkgs/a9858885e197f984d92d7fe64e9fff6b2e488d40#python312",
+      "source": "devbox-search",
+      "version": "3.12.3",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/65ackbgqn02p6fy75rksjbp17zj6440j-python3-3.12.3",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/65ackbgqn02p6fy75rksjbp17zj6440j-python3-3.12.3"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/59siylp1k9i3ch4d9m3vs5jp5z56b5sg-python3-3.12.3",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/ji094818a78hrkag26202b21nr5v1pgk-python3-3.12.3-debug"
+            }
+          ],
+          "store_path": "/nix/store/59siylp1k9i3ch4d9m3vs5jp5z56b5sg-python3-3.12.3"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nrskm5p85y6751k02ih51bpzfag8g5r8-python3-3.12.3",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/nrskm5p85y6751k02ih51bpzfag8g5r8-python3-3.12.3"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/zwvdwiw0zg5liz6lkkkqyab035parhld-python3-3.12.3",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/wj6mffmpvly3md2hqnq2jj8zrrw5qck9-python3-3.12.3-debug"
+            }
+          ],
+          "store_path": "/nix/store/zwvdwiw0zg5liz6lkkkqyab035parhld-python3-3.12.3"
+        }
+      }
+    },
+    "python312Packages.ipykernel@latest": {
+      "last_modified": "2024-11-28T07:51:56Z",
+      "resolved": "github:NixOS/nixpkgs/226216574ada4c3ecefcbbec41f39ce4655f78ef#python312Packages.ipykernel",
+      "source": "devbox-search",
+      "version": "6.29.5",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/dsa9nw66bhqc1bwi698rgh00hzyw5d0q-python3.12-ipykernel-6.29.5",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/ykzymbap0y0f10cmxpznydpzq0mwlsl7-python3.12-ipykernel-6.29.5-dist"
+            }
+          ],
+          "store_path": "/nix/store/dsa9nw66bhqc1bwi698rgh00hzyw5d0q-python3.12-ipykernel-6.29.5"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/hzblrj0116b04a22h39sjnc17y23jrbl-python3.12-ipykernel-6.29.5",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/vb2f2b5kqx7nkajsqc7srrcz6cz8x3zz-python3.12-ipykernel-6.29.5-dist"
+            }
+          ],
+          "store_path": "/nix/store/hzblrj0116b04a22h39sjnc17y23jrbl-python3.12-ipykernel-6.29.5"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/r2zr4ghyw75ryhkkm88gk6v5wgdp89rf-python3.12-ipykernel-6.29.5",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/ksvqlkf43m4m18svc33ikn70ddbshkdf-python3.12-ipykernel-6.29.5-dist"
+            }
+          ],
+          "store_path": "/nix/store/r2zr4ghyw75ryhkkm88gk6v5wgdp89rf-python3.12-ipykernel-6.29.5"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/d2g0swdi1fbkisyfyjic57r0ai7mgm0z-python3.12-ipykernel-6.29.5",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/agzw61828y3gy4drcsqw3lp8dmxwv4n2-python3.12-ipykernel-6.29.5-dist"
+            }
+          ],
+          "store_path": "/nix/store/d2g0swdi1fbkisyfyjic57r0ai7mgm0z-python3.12-ipykernel-6.29.5"
+        }
+      }
+    },
     "watchexec@latest": {
       "last_modified": "2024-11-16T04:25:12Z",
       "resolved": "github:NixOS/nixpkgs/34a626458d686f1b58139620a8b2793e9e123bba#watchexec",
