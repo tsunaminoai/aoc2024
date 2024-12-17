@@ -20,14 +20,18 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(lib);
     const run_all_step = b.step("run", "Run all days");
 
-    for (1..10) |n| {
+    for (1..18) |n| {
+        const day_file = b.fmt("src/2024/day{}.zig", .{n});
+        std.fs.cwd().access(day_file, .{}) catch {
+            // std.log.info("Skipping: {s} (not found)", .{day_file});
+            continue;
+        };
         const exe = b.addExecutable(.{
             .name = b.fmt("aoc_{}", .{n}),
             .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
         });
-        const day_file = b.fmt("src/2024/day{}.zig", .{n});
         const day_mod = b.addSharedLibrary(.{
             .name = "day",
             .target = target,
