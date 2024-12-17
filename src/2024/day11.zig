@@ -6,7 +6,7 @@ const Thread = std.Thread;
 
 pub const DayNumber = 11;
 
-pub const Answer1 = 222461;
+pub const Answer1 = 8;
 pub const Answer2 = 0;
 
 pub fn part1(in: []const u8) f32 {
@@ -14,15 +14,15 @@ pub fn part1(in: []const u8) f32 {
     defer _ = gpa.deinit();
     const alloc = gpa.allocator();
 
-    var stones = Array(i64).init(alloc);
+    var stones = Array(i128).init(alloc);
     defer stones.deinit();
 
     var iter = std.mem.splitAny(u8, in, " \n");
     while (iter.next()) |number| {
         if (number.len == 0) break;
-        stones.append(std.fmt.parseInt(i64, number, 10) catch unreachable) catch unreachable;
+        stones.append(std.fmt.parseInt(i128, number, 10) catch unreachable) catch unreachable;
     }
-    for (0..25) |i| {
+    for (0..0) |i| {
         blink(&stones) catch unreachable;
         std.debug.print("blink {} gets {} stones\n", .{ i, stones.items.len });
     }
@@ -33,19 +33,19 @@ pub fn part2(in: []const u8) f32 {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    var stones = Array(i64).init(allocator);
+    var stones = Array(i128).init(allocator);
     defer stones.deinit();
 
     var iter = std.mem.splitAny(u8, in, " \n");
     while (iter.next()) |number| {
         if (number.len == 0) continue;
-        stones.append(std.fmt.parseInt(i64, number, 10) catch unreachable) catch unreachable;
+        stones.append(std.fmt.parseInt(i128, number, 10) catch unreachable) catch unreachable;
     }
 
     const cpus = std.Thread.getCpuCount() catch unreachable;
-    // var pool: std.Thread.Pool = undefined;
-    // pool.init(.{ .allocator = alloc }) catch unreachable;
-    // defer pool.deinit();
+    var pool: std.Thread.Pool = undefined;
+    pool.init(.{ .allocator = allocator }) catch unreachable;
+    defer pool.deinit();
 
     for (0..75) |iteration| {
         var arena = std.heap.ArenaAllocator.init(allocator);
@@ -57,20 +57,20 @@ pub fn part2(in: []const u8) f32 {
         wg.reset();
         var threads = alloc.alloc(Thread, cpus) catch unreachable;
 
-        var results = alloc.alloc(Array(i64), cpus) catch unreachable;
+        var results = alloc.alloc(Array(i128), cpus) catch unreachable;
 
         const bin_size = if (cpus > stones.items.len) stones.items.len else @divFloor(stones.items.len, cpus);
         // if (bin_size == 0) bin_size = 1;
         // const remainder = @mod(stones.items.len, cpus);
         std.debug.print("Bins of {} size \n", .{bin_size});
 
-        var it = std.mem.window(i64, stones.items, bin_size, bin_size);
+        var it = std.mem.window(i128, stones.items, bin_size, bin_size);
         var idx: usize = 0;
         for (threads[0..], 0..) |*t, i| {
             if (it.next()) |bin| {
                 if (bin.len == 0) continue;
-                const slice: []const i64 = if (i == threads.len - 1) stones.items[bin_size * i ..] else bin[0..];
-                results[i] = Array(i64).init(alloc);
+                const slice: []const i128 = if (i == threads.len - 1) stones.items[bin_size * i ..] else bin[0..];
+                results[i] = Array(i128).initCapacity(alloc, bin_size * 2) catch unreachable;
                 wg.start();
                 // std.debug.print("Giving thread {}: {any}\n", .{ i, slice });
                 t.* = Thread.spawn(.{}, worker, .{ &wg, slice, &results[i], i }) catch unreachable;
@@ -82,7 +82,7 @@ pub fn part2(in: []const u8) f32 {
         for (0..idx) |i| {
             threads[i].join();
         }
-        var new_stones = Array(i64).init(allocator);
+        var new_stones = Array(i128).init(allocator);
 
         for (0..idx) |i| {
             const res = results[i];
@@ -101,7 +101,7 @@ pub fn part2(in: []const u8) f32 {
     return @floatFromInt(stones.items.len);
 }
 
-pub fn worker(wg: *std.Thread.WaitGroup, stones: []const i64, output: *Array(i64), index: usize) void {
+pub fn worker(wg: *std.Thread.WaitGroup, stones: []const i128, output: *Array(i128), index: usize) void {
     if (stones.len == 0) return;
     std.debug.print("Thread {} started\n", .{index});
     // std.debug.print("\tGiven {any}\n", .{stones});
@@ -111,8 +111,8 @@ pub fn worker(wg: *std.Thread.WaitGroup, stones: []const i64, output: *Array(i64
             output.*.append(1) catch unreachable
         else {
             const num_digits = comptime_int_log10(s);
+            // std.debug.print("{} digits in {}\n", .{ num_digits, s });
             if (num_digits % 2 == 0) {
-                // std.debug.print("{}\n", .{num_digits});
                 const split = comptime_pow10(num_digits / 2);
                 output.*.append(@divFloor(s, split)) catch unreachable;
                 output.*.append(@mod(s, split)) catch unreachable;
@@ -126,7 +126,7 @@ pub fn worker(wg: *std.Thread.WaitGroup, stones: []const i64, output: *Array(i64
     // std.debug.print("\n\t{} Transformed {any}\n\tto\n\t{any}\n", .{ index, stones, output.items });
 }
 
-pub fn blink(stones: *std.ArrayList(i64)) !void {
+pub fn blink(stones: *std.ArrayList(i128)) !void {
     // Preallocate memory to avoid frequent reallocations
     try stones.ensureTotalCapacity(stones.items.len * 2);
 
@@ -160,7 +160,7 @@ test {
     try std.testing.expectEqual(55312, part2(test_input));
 }
 
-inline fn comptime_int_log10(x: i64) usize {
+inline fn comptime_int_log10(x: i128) usize {
     return switch (x) {
         0...9 => 1,
         10...99 => 2,
@@ -182,7 +182,7 @@ inline fn comptime_int_log10(x: i64) usize {
     };
 }
 
-inline fn comptime_pow10(n: usize) i64 {
+inline fn comptime_pow10(n: usize) i128 {
     // std.debug.print("{}\n", .{n});
     return switch (n) {
         0 => 1,
