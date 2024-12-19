@@ -78,7 +78,7 @@ fn check(self: Self) usize {
 }
 
 fn isLessThan(_: @TypeOf(.{}), a: Pattern, b: Pattern) bool {
-    return a.len > b.len;
+    return b.len < a.len;
 }
 
 fn load(self: *Self, in: []const u8) !void {
