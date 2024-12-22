@@ -20,7 +20,7 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(lib);
     const run_all_step = b.step("run", "Run all days");
 
-    for (1..18) |n| {
+    for (1..26) |n| {
         const day_file = b.fmt("src/2024/day{}.zig", .{n});
         std.fs.cwd().access(day_file, .{}) catch {
             // std.log.info("Skipping: {s} (not found)", .{day_file});
