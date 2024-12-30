@@ -24,7 +24,7 @@ pub fn part1(in: []const u8) f32 {
         ret += result;
         // std.debug.print("{}: {}\n", .{ num, result });
     }
-    std.debug.print("{}\n", .{ret});
+    // std.debug.print("{}\n", .{ret});
     return @floatFromInt(ret);
 }
 pub fn part2(in: []const u8) f32 {
