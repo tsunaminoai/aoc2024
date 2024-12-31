@@ -57,7 +57,7 @@ fn worker(start: usize, len: usize, results: *Array(i64)) void {
 }
 
 pub fn part2(in: []const u8) f32 {
-    var ret: f32 = 0;
+    const ret: f32 = 0;
     _ = in;
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -66,6 +66,7 @@ pub fn part2(in: []const u8) f32 {
 
     const num_threads = std.Thread.getCpuCount() catch unreachable;
     const batch_size = 100_000;
+    _ = batch_size; // autofix
 
     var pool: std.Thread.Pool = undefined;
     pool.init(.{
@@ -79,24 +80,24 @@ pub fn part2(in: []const u8) f32 {
     var results = Array(i64).init(alloc);
     defer results.deinit();
 
-    var idx: usize = 40_900_000;
-    while (idx < 100_000_000) {
-        wait_group.reset();
-        for (num_threads) |_| {
-            pool.spawn(worker, .{
-                idx,
-                batch_size,
-                &results,
-            }) catch unreachable;
-            idx += batch_size;
-        }
-        pool.waitAndWork(&wait_group);
-        if (results.getLastOrNull()) |_| {
-            std.mem.sort(i64, results.items, .{}, isLessThan);
-            ret = @floatFromInt(results.items[0]);
-            break;
-        }
-    }
+    // var idx: usize = 40_900_000;
+    // while (idx < 100_000_000) {
+    //     wait_group.reset();
+    //     for (num_threads) |_| {
+    //         pool.spawn(worker, .{
+    //             idx,
+    //             batch_size,
+    //             &results,
+    //         }) catch unreachable;
+    //         idx += batch_size;
+    //     }
+    //     pool.waitAndWork(&wait_group);
+    //     if (results.getLastOrNull()) |_| {
+    //         std.mem.sort(i64, results.items, .{}, isLessThan);
+    //         ret = @floatFromInt(results.items[0]);
+    //         break;
+    //     }
+    // }
 
     std.debug.print("\n\n{}\n\n", .{ret});
     return 0;

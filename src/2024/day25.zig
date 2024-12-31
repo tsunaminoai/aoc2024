@@ -13,14 +13,11 @@ pub const Answer2 = 0;
 const PinPattern = struct {
     type: Type = undefined,
     heights: [5]i16 = .{-1} ** 5,
-    width: usize = 5,
     const Type = enum { Key, Lock };
 
-    pub fn init(alloc: Allocator, in: []const u8) !PinPattern {
-        _ = alloc; // autofix
+    pub fn init(in: []const u8) PinPattern {
         var self = PinPattern{
             .type = if (in[0] == '#') .Lock else .Key,
-            .width = std.mem.indexOf(u8, in, "\n").?,
         };
         var line_iter = std.mem.splitScalar(u8, in, '\n');
         _ = line_iter.next();
@@ -106,27 +103,22 @@ pub fn part1(in: []const u8) f32 {
     defer _ = gpa.deinit();
     const alloc = gpa.allocator();
 
-    var patterns = Array(PinPattern).init(alloc);
     var keys = Array(PinPattern).init(alloc);
     var locks = Array(PinPattern).init(alloc);
 
     defer {
         keys.deinit();
         locks.deinit();
-        for (patterns.items) |p|
-            p.deinit();
-        patterns.deinit();
     }
 
     var pat_iter = std.mem.splitSequence(u8, in, "\n\n");
     while (pat_iter.next()) |pat| {
         if (pat.len == 0) continue;
-        const p = PinPattern.init(alloc, pat) catch unreachable;
-        patterns.append(p) catch unreachable;
+        const p = PinPattern.init(pat);
         if (p.type == .Key)
-            keys.append(patterns.getLast()) catch unreachable
+            keys.append(p) catch unreachable
         else
-            locks.append(patterns.getLast()) catch unreachable;
+            locks.append(p) catch unreachable;
     }
 
     for (keys.items) |key| {
