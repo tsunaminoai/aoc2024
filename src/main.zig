@@ -13,5 +13,5 @@ pub fn main() !void {
     d.part1.expectedResult = Day.Answer1;
     d.part2.expectedResult = Day.Answer2;
 
-    _ = d.run();
+    _ = try d.run();
 }

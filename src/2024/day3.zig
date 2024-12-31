@@ -1,12 +1,14 @@
 const std = @import("std");
 const mvzr = @import("mvzr");
+const lib = @import("lib.zig");
+const Error = lib.Error;
 
 pub const DayNumber = 3;
 
 pub const Answer1 = 174336360;
 pub const Answer2 = 88802350;
 
-pub fn part1(in: []const u8) f32 {
+pub fn part1(in: []const u8) Error!i64 {
     const regex = mvzr.Regex.compile("mul\\(([0-9]+),([0-9]+)\\)") orelse unreachable;
     var ret: i32 = 0;
     var line_iter = std.mem.splitScalar(u8, in, '\n');
@@ -24,9 +26,9 @@ pub fn part1(in: []const u8) f32 {
             // std.debug.print("{} x {} = {}: {}\n", .{ num1, num2, mul, ret });
         }
     }
-    return @floatFromInt(ret);
+    return (ret);
 }
-pub fn part2(in: []const u8) f32 {
+pub fn part2(in: []const u8) Error!i64 {
     const regex = mvzr.Regex.compile("do(n't)*\\(\\)|mul\\(([0-9]+),([0-9]+)\\)") orelse unreachable;
     var ret: i32 = 0;
     var line_iter = std.mem.splitScalar(u8, in, '\n');
@@ -53,7 +55,7 @@ pub fn part2(in: []const u8) f32 {
             }
         }
     }
-    return @floatFromInt(ret);
+    return (ret);
 }
 const test_input =
     \\xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))

@@ -1,17 +1,21 @@
 const std = @import("std");
+const lib = @import("lib.zig");
+const Error = lib.Error;
 
 pub const DayNumber = 1;
 
 pub const Answer1 = 2164381;
 pub const Answer2 = 20719933;
 
-fn isLessThan(_:@TypeOf(.{}), a:i32,b:i32) bool{return a<b;}
+fn isLessThan(_: @TypeOf(.{}), a: i32, b: i32) bool {
+    return a < b;
+}
 
-pub fn part1(in: []const u8) f32 {
-    var ret: f32 = 0;
+pub fn part1(in: []const u8) Error!i64 {
+    var ret: i64 = 0;
     var line_it = std.mem.splitAny(u8, in, "\n");
 
-    var buffer: [1024*100]u8 = undefined;
+    var buffer: [1024 * 100]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
 
     const alloc = fba.allocator();
@@ -21,28 +25,26 @@ pub fn part1(in: []const u8) f32 {
     var list2 = std.ArrayList(i32).init(alloc);
     defer list2.deinit();
     while (line_it.next()) |line| {
-
         var tok_it = std.mem.tokenizeAny(u8, line, " ");
         var tok = tok_it.next() orelse "0";
 
         list1.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
         tok = tok_it.next() orelse "0";
         list2.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
-
     }
-    std.mem.sort(i32,list1.items , .{}, isLessThan);
-    std.mem.sort(i32,list2.items , .{}, isLessThan);
+    std.mem.sort(i32, list1.items, .{}, isLessThan);
+    std.mem.sort(i32, list2.items, .{}, isLessThan);
 
-    for(0..list1.items.len)|i|{
-        ret += @floatFromInt(@abs(list1.items[i] - list2.items[i]));
+    for (0..list1.items.len) |i| {
+        ret += (@abs(list1.items[i] - list2.items[i]));
     }
     return ret;
 }
-pub fn part2(in: []const u8) f32 {
+pub fn part2(in: []const u8) Error!i64 {
     var ret: i32 = 0;
     var line_it = std.mem.splitAny(u8, in, "\n");
 
-    var buffer: [1024*100]u8 = undefined;
+    var buffer: [1024 * 100]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
 
     const alloc = fba.allocator();
@@ -60,18 +62,17 @@ pub fn part2(in: []const u8) f32 {
         list2.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
     }
 
-    for(list1.items)|num|{
-        const count:i32 = @intCast(std.mem.count(i32, list2.items, &.{num}));
-        if(count > 0){
-//         std.debug.print("Found {} {} times\t", .{num, count});
+    for (list1.items) |num| {
+        const count: i32 = @intCast(std.mem.count(i32, list2.items, &.{num}));
+        if (count > 0) {
+            //         std.debug.print("Found {} {} times\t", .{num, count});
 
             ret += num * count;
-//         std.debug.print("{d:0.2}\n", .{ret});
+            //         std.debug.print("{d:0.2}\n", .{ret});
         }
     }
 
-
-    return @floatFromInt(ret);
+    return (ret);
 }
 
 const test_input =

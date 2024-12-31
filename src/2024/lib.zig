@@ -4,6 +4,8 @@ const Allocator = std.mem.Allocator;
 const tst = std.testing;
 const math = std.math;
 
+pub const Error = error{} || std.mem.Allocator.Error;
+
 pub const Position = struct {
     x: i32 = 0,
     y: i32 = 0,

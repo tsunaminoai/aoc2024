@@ -1,17 +1,19 @@
 const std = @import("std");
+const lib = @import("lib.zig");
+const Error = lib.Error;
 
 pub const DayNumber = 6;
 
 pub const Answer1 = 0;
 pub const Answer2 = 0;
 
-pub fn part1(in: []const u8) f32 {
-    const ret: f32 = 0;
+pub fn part1(in: []const u8) Error!i64 {
+    const ret: i64 = 0;
     _ = in;
     return ret;
 }
-pub fn part2(in: []const u8) f32 {
-    const ret: f32 = 0;
+pub fn part2(in: []const u8) Error!i64 {
+    const ret: i64 = 0;
     _ = in;
     return ret;
 }

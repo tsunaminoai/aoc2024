@@ -4,13 +4,13 @@ const testing = std.testing;
 pub const Half = struct {
     part: u2 = 0,
     testContents: ?[]const u8 = null,
-    expectedResult: f32 = 0,
-    actualResult: f32 = 0,
+    expectedResult: i64 = 0,
+    actualResult: i64 = 0,
     runFn: TestFn,
     runTime: i128 = 0,
 
     pub fn init(alloc: std.mem.Allocator, day: u8, half: u1, testFn: TestFn) !Half {
-        const infile = try std.fmt.allocPrint(alloc, "inputs/2024/{}.txt", .{ day });
+        const infile = try std.fmt.allocPrint(alloc, "inputs/2024/{}.txt", .{day});
         defer alloc.free(infile);
         var file = try std.fs.cwd().openFile(infile, .{});
         defer file.close();
@@ -25,9 +25,9 @@ pub const Half = struct {
         if (self.testContents) |tc| alloc.free(tc);
     }
 
-    pub fn run(self: *Half) bool {
+    pub fn run(self: *Half) !bool {
         const start = std.time.nanoTimestamp();
-        self.actualResult = self.runFn(self.testContents.?);
+        self.actualResult = try self.runFn(self.testContents.?);
         self.runTime = std.time.nanoTimestamp() - start;
         const ret = self.actualResult == self.expectedResult;
         if (!ret) std.log.err("Part {} failed. Expected '{}' got '{d:0.2}'", .{
@@ -45,16 +45,16 @@ pub const Half = struct {
         return ret;
     }
 };
-const TestFn = *const fn ([]const u8) f32;
-fn day1Test(in: []const u8) f32 {
-    var ret: f32 = 0;
+const TestFn = *const fn ([]const u8) std.mem.Allocator.Error!i64;
+fn day1Test(in: []const u8) i64 {
+    var ret: i64 = 0;
     for (in) |c| {
         ret += if (c == '(') 1 else if (c == ')') -1 else 0;
     }
     return ret;
 }
-fn day2Test(in: []const u8) f32 {
-    var ret: f32 = 0;
+fn day2Test(in: []const u8) i64 {
+    var ret: i64 = 0;
     const idx: usize = blk: for (in, 0..) |c, i| {
         ret += if (c == '(') 1 else if (c == ')') -1 else 0;
         if (ret == -1) break :blk i;
@@ -90,8 +90,8 @@ pub const Day = struct {
         self.part2.deinit(self.allocator);
     }
 
-    pub fn run(self: *Day) bool {
+    pub fn run(self: *Day) !bool {
         std.debug.print("Running Day {}\n", .{self.number});
-        return self.part1.run() and self.part2.run();
+        return try self.part1.run() and try self.part2.run();
     }
 };

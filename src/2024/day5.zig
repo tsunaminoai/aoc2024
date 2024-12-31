@@ -1,11 +1,13 @@
 const std = @import("std");
+const lib = @import("lib.zig");
+const Error = lib.Error;
 
 pub const DayNumber = 5;
 
 pub const Answer1 = 5713;
 pub const Answer2 = 5180;
 
-pub fn part1(in: []const u8) f32 {
+pub fn part1(in: []const u8) Error!i64 {
     var ret: i32 = 0;
 
     const section_split = std.mem.indexOf(u8, in, "\n\n") orelse unreachable;
@@ -29,7 +31,7 @@ pub fn part1(in: []const u8) f32 {
     _ = valids; // autofix
     ret = valid_updates_middle_page_sum(rules.items, updates);
     // std.debug.print("Found {} valid updates\nSum of middle page numbers: {}\n", .{ valids, ret });
-    return @floatFromInt(ret);
+    return (ret);
 }
 /// The first section specifies the page ordering rules, one per line. The
 /// first rule, 47|53, means that if an update includes both page number 47
@@ -218,7 +220,7 @@ fn fixed_updates_middle_page_sum(rules: []const Rule, updates: std.ArrayList(Upd
     return sum;
 }
 
-pub fn part2(in: []const u8) f32 {
+pub fn part2(in: []const u8) Error!i64 {
     var ret: i32 = 0;
 
     const section_split = std.mem.indexOf(u8, in, "\n\n") orelse unreachable;
@@ -242,7 +244,7 @@ pub fn part2(in: []const u8) f32 {
     _ = valids; // autofix
     ret = fixed_updates_middle_page_sum(rules.items, updates);
     // std.debug.print("Found {} valid updates\nSum of fixed middle page numbers: {}\n", .{ valids, ret });
-    return @floatFromInt(ret);
+    return (ret);
 }
 const test_input =
     \\47|53

@@ -1,4 +1,6 @@
 const std = @import("std");
+const lib = @import("lib.zig");
+const Error = lib.Error;
 
 pub const DayNumber = 2;
 
@@ -22,8 +24,8 @@ fn isSafe(levels: []i32) bool {
     return true;
 }
 
-pub fn part1(in: []const u8) f32 {
-    var ret: f32 = 0;
+pub fn part1(in: []const u8) Error!i64 {
+    var ret: i64 = 0;
     var report_it = std.mem.splitAny(u8, in, "\n");
 
     var buffer: [1024 * 100]u8 = undefined;
@@ -48,8 +50,8 @@ pub fn part1(in: []const u8) f32 {
 
     return ret;
 }
-pub fn part2(in: []const u8) f32 {
-    var ret: f32 = 0;
+pub fn part2(in: []const u8) Error!i64 {
+    var ret: i64 = 0;
     var report_it = std.mem.splitAny(u8, in, "\n");
 
     var buffer: [1024 * 100]u8 = undefined;

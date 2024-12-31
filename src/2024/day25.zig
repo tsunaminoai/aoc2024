@@ -3,7 +3,8 @@ const Array = std.ArrayList;
 const Allocator = std.mem.Allocator;
 const tst = std.testing;
 const math = std.math;
-const lib = @import("lib");
+const lib = @import("lib.zig");
+const Error = lib.Error;
 
 pub const DayNumber = 25;
 
@@ -97,7 +98,7 @@ test "key" {
     try tst.expectEqualSlices(i16, expected, &p.heights);
 }
 
-pub fn part1(in: []const u8) f32 {
+pub fn part1(in: []const u8) Error!i64 {
     var ret: i32 = 0;
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -130,10 +131,10 @@ pub fn part1(in: []const u8) f32 {
         }
     }
 
-    return @floatFromInt(ret);
+    return (ret);
 }
-pub fn part2(in: []const u8) f32 {
-    const ret: f32 = 0;
+pub fn part2(in: []const u8) Error!i64 {
+    const ret: i64 = 0;
     _ = in;
     return ret;
 }

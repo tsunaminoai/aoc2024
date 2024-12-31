@@ -1,4 +1,6 @@
 const std = @import("std");
+const lib = @import("lib.zig");
+const Error = lib.Error;
 
 const coord = struct {
     x: i32,
@@ -16,8 +18,8 @@ pub const DayNumber = 4;
 pub const Answer1 = 0;
 pub const Answer2 = 0;
 
-pub fn part1(in: []const u8) f32 {
-    var ret: f32 = 0;
+pub fn part1(in: []const u8) Error!i64 {
+    var ret: i64 = 0;
 
     const xmas = "XMAS";
     const grid_w = std.mem.indexOfScalar(u8, in, '\n').? + 1;
@@ -103,8 +105,8 @@ inline fn get(in: []const u8, w: i32, c: coord) ?u8 {
     return in[@intCast(c.y * w + c.x)];
 }
 
-pub fn part2(in: []const u8) f32 {
-    const ret: f32 = 0;
+pub fn part2(in: []const u8) Error!i64 {
+    const ret: i64 = 0;
     _ = in;
     return ret;
 }

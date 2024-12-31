@@ -3,15 +3,15 @@ const Array = std.ArrayList;
 const Allocator = std.mem.Allocator;
 const tst = std.testing;
 const math = std.math;
-const lib = @import("lib");
-
+const lib = @import("lib.zig");
+const Error = lib.Error;
 pub const DayNumber = 22;
 
 pub const Answer1 = 14119253575;
 pub const Answer2 = 0;
 
-pub fn part1(in: []const u8) f32 {
-    var ret: u64 = 0;
+pub fn part1(in: []const u8) Error!i64 {
+    var ret: i64 = 0;
     var iter = std.mem.splitScalar(u8, in, '\n');
     while (iter.next()) |line| {
         if (line.len == 0) continue;
@@ -21,14 +21,14 @@ pub fn part1(in: []const u8) f32 {
         p.init(num);
         p.run(2000);
         const result = p.get();
-        ret += result;
+        ret += @intCast(result);
         // std.debug.print("{}: {}\n", .{ num, result });
     }
     // std.debug.print("{}\n", .{ret});
-    return @floatFromInt(ret);
+    return (ret);
 }
-pub fn part2(in: []const u8) f32 {
-    const ret: f32 = 0;
+pub fn part2(in: []const u8) Error!i64 {
+    const ret: i64 = 0;
     _ = in;
     return ret;
 }

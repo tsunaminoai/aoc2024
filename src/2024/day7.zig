@@ -1,6 +1,8 @@
 const std = @import("std");
 const Array = std.ArrayList;
 const tst = std.testing;
+const lib = @import("lib.zig");
+const Error = lib.Error;
 
 pub const DayNumber = 7;
 
@@ -114,7 +116,7 @@ fn Add(left: i64, right: i64) i64 {
 ///TODO: Evalate swappable operators
 ///TODO: Evalute if equation is solvable
 ///TODO: Output sum of solveable equations
-pub fn part1(in: []const u8) f32 {
+pub fn part1(in: []const u8) Error!i64 {
     var ret: i64 = 0;
     var iter = std.mem.splitScalar(u8, in, '\n');
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -134,10 +136,10 @@ pub fn part1(in: []const u8) f32 {
         }
     }
     // std.debug.print("{}\n", .{ret});
-    return @floatFromInt(ret);
+    return (ret);
 }
-pub fn part2(in: []const u8) f32 {
-    const ret: f32 = 0;
+pub fn part2(in: []const u8) Error!i64 {
+    const ret: i64 = 0;
     _ = in;
     return ret;
 }
