@@ -1,4 +1,8 @@
 const std = @import("std");
+const models = @import("models.zig");
+test {
+    testing.refAllDecls(models);
+}
 const testing = std.testing;
 
 pub const Half = struct {
@@ -10,7 +14,7 @@ pub const Half = struct {
     runTime: i128 = 0,
 
     pub fn init(alloc: std.mem.Allocator, day: u8, half: u1, testFn: TestFn) !Half {
-        const infile = try std.fmt.allocPrint(alloc, "inputs/2024/{}.txt", .{ day });
+        const infile = try std.fmt.allocPrint(alloc, "inputs/2024/{}.txt", .{day});
         defer alloc.free(infile);
         var file = try std.fs.cwd().openFile(infile, .{});
         defer file.close();

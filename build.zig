@@ -10,12 +10,18 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
+    const rem_dep = b.dependency("rem", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     const lib = b.addStaticLibrary(.{
         .name = "aoc",
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
+    lib.root_module.addImport("rem", rem_dep.module("rem"));
 
     b.installArtifact(lib);
     const run_all_step = b.step("run", "Run all days");
@@ -64,6 +70,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+    lib_unit_tests.root_module.addImport("rem", rem_dep.module("rem"));
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 

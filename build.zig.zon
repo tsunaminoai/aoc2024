@@ -27,6 +27,11 @@
             .url = "https://github.com/mnemnion/mvzr/archive/refs/tags/v0.3.1.tar.gz",
             .hash = "1220b15a8c90d7b5af5d12781e45336147cd09e06028b9ecd7461f15970d8670a0ae",
         },
+
+        .rem = .{
+            .url = "https://github.com/chadwain/rem/archive/refs/heads/master.zip",
+            .hash = "1220da547f973ec198c5a56c6a0c638c915d5d756209f66ef0f281948d4ac1bf6725",
+        },
     },
     .paths = .{
         "build.zig",
