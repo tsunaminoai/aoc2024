@@ -7,10 +7,15 @@ const posix = std.posix;
 const json = std.json;
 const rem = @import("rem");
 
+const headers_max_size = 1024 * 4;
+const body_max_size = 65536 * 4;
+
 pub const User = struct {
     token: []u8,
     owner: []u8 = undefined,
     allocator: Allocator,
+
+    const preamble = "session=";
 
     const default_owner = "unknown.unknown.0";
 
@@ -21,8 +26,9 @@ pub const User = struct {
         user.allocator = alloc;
 
         if (token) |t| {
-            user.token = try alloc.alloc(u8, t.len);
-            @memcpy(user.token, t);
+            user.token = try alloc.alloc(u8, t.len + preamble.len);
+            @memcpy(user.token[0..preamble.len], preamble);
+            @memcpy(user.token[preamble.len..], t);
         }
 
         return user;
@@ -78,18 +84,82 @@ pub const Puzzle = struct {
         _ = self; // autofix
     }
 
-    pub fn fetch_html(
-        self: *Puzzle,
-        url: []const u8,
-    ) !void {
-        const headers_max_size = 1024 * 4;
-        const body_max_size = 65536 * 4;
-
+    pub fn fetch_input(self: *Puzzle) !void {
         var client = std.http.Client{ .allocator = self.allocator };
         defer client.deinit();
 
         var hbuffer: [headers_max_size]u8 = undefined;
-        const options = std.http.Client.RequestOptions{ .server_header_buffer = &hbuffer };
+        const options = std.http.Client.RequestOptions{
+            .server_header_buffer = &hbuffer,
+            .extra_headers = &.{
+                std.http.Header{ .name = "Set-Cookie", .value = self.user.token },
+            },
+        };
+        var url_buf: [120:0]u8 = .{0} ** 120;
+        const url = try std.fmt.bufPrint(&url_buf, "http://localhost:8000/?s={}/day/{}/input", .{
+            self.year,
+            self.day,
+        });
+        const uri = try std.Uri.parse(url);
+        var request = try client.open(std.http.Method.GET, uri, options);
+        defer request.deinit();
+        std.debug.print("Getting {s} with options {}\n", .{ uri.path.percent_encoded, options });
+        std.debug.print("{s}\n", .{request.extra_headers[0].value});
+        _ = try request.send();
+        _ = try request.finish();
+        _ = try request.wait();
+
+        // Check the HTTP return code
+        if (request.response.status != std.http.Status.ok) {
+            std.debug.print("{s}\n", .{request.response.reason});
+            return error.WrongStatusResponse;
+        }
+
+        // Read the body
+        var bbuffer: [body_max_size]u8 = undefined;
+        const hlength = request.response.parser.header_bytes_len;
+        _ = hlength; // autofix
+        const blen = try request.readAll(&bbuffer);
+        _ = blen; // autofix
+
+        // bbuffer[0..blen]
+        var input_dir = try self.openDir();
+        defer input_dir.close();
+    }
+
+    pub fn openDir(self: Puzzle) !std.fs.Dir {
+        var str: [12:0]u8 = undefined;
+        _ = try std.fmt.bufPrint(&str, "inputs/{}", .{self.year});
+        return std.fs.cwd().openDir(&str, .{}) catch {
+            try self.mkDir();
+            return try std.fs.cwd().openDir(&str, .{});
+        };
+    }
+
+    pub fn mkDir(self: Puzzle) !void {
+        const inputs_dir = std.fs.cwd().openDir("inputs", .{}) catch blk: {
+            try std.fs.cwd().makeDir("inputs");
+            break :blk try std.fs.cwd().openDir("inputs", .{});
+        };
+        var str: [4]u8 = undefined;
+        _ = std.fmt.formatIntBuf(&str, self.year, 10, .lower, .{});
+        try inputs_dir.makeDir(&str);
+    }
+
+    pub fn fetch_html(
+        self: *Puzzle,
+        url: []const u8,
+    ) !void {
+        var client = std.http.Client{ .allocator = self.allocator };
+        defer client.deinit();
+
+        var hbuffer: [headers_max_size]u8 = undefined;
+        const options = std.http.Client.RequestOptions{
+            .server_header_buffer = &hbuffer,
+            .extra_headers = &.{
+                std.http.Header{ .name = "Cookie", .value = self.user.token },
+            },
+        };
 
         const uri = try std.Uri.parse(url);
 
@@ -102,6 +172,7 @@ pub const Puzzle = struct {
 
         // Check the HTTP return code
         if (request.response.status != std.http.Status.ok) {
+            std.debug.print("{s}\n", .{request.response.reason});
             return error.WrongStatusResponse;
         }
 
@@ -191,10 +262,14 @@ pub const Puzzle = struct {
 };
 
 test {
+    var u = try User.discover(tst.allocator);
+    defer u.deinit();
+
     var p = Puzzle{
+        .user = u,
         .allocator = tst.allocator,
         .day = 19,
         .year = 2024,
     };
-    try p.fetch_html("https://falseblue.com");
+    try p.fetch_input();
 }
