@@ -46,28 +46,28 @@ pub const Half = struct {
     }
 };
 const TestFn = *const fn ([]const u8) std.mem.Allocator.Error!i64;
-fn day1Test(in: []const u8) i64 {
+fn day1Test(in: []const u8) std.mem.Allocator.Error!i64 {
     var ret: i64 = 0;
     for (in) |c| {
         ret += if (c == '(') 1 else if (c == ')') -1 else 0;
     }
     return ret;
 }
-fn day2Test(in: []const u8) i64 {
+fn day2Test(in: []const u8) std.mem.Allocator.Error!i64 {
     var ret: i64 = 0;
     const idx: usize = blk: for (in, 0..) |c, i| {
         ret += if (c == '(') 1 else if (c == ')') -1 else 0;
         if (ret == -1) break :blk i;
     } else 0;
 
-    return @floatFromInt(idx + 1);
+    return @intCast(idx + 1);
 }
 test {
     var d = try Day.init(std.testing.allocator, 0, day1Test, day2Test);
     d.part1.expectedResult = 138;
     d.part2.expectedResult = 1771;
     defer d.deinit();
-    try std.testing.expect(d.run());
+    try std.testing.expect(try d.run());
 }
 
 pub const Day = struct {

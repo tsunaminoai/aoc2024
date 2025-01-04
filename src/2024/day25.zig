@@ -65,7 +65,7 @@ const PinPattern = struct {
 };
 
 test "lock" {
-    var p = try PinPattern.init(tst.allocator,
+    var p = PinPattern.init(
         \\#####
         \\.####
         \\.####
@@ -77,12 +77,12 @@ test "lock" {
     defer p.deinit();
     const expected = &.{ 0, 5, 3, 4, 3 };
 
-    std.debug.print("{any}\n", .{p.heights});
+    // std.debug.print("{any}\n", .{p.heights});
     try tst.expectEqualSlices(i16, expected, &p.heights);
 }
 
 test "key" {
-    var p = try PinPattern.init(tst.allocator,
+    var p = PinPattern.init(
         \\.....
         \\#....
         \\#....
