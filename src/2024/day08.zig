@@ -3,7 +3,7 @@ const lib = @import("lib.zig");
 const Error = lib.Error;
 
 pub const DayNumber = 0;
-pub const data = @embedFile("data/8.txt");
+pub const data = ""; // @embedFile("data/8.txt");
 
 pub const Answer1 = 0;
 pub const Answer2 = 0;
@@ -23,6 +23,6 @@ const test_input =
 ;
 
 test {
-    try std.testing.expectEqual(0, part1(test_input));
-    try std.testing.expectEqual(0, part2(test_input));
+    try std.testing.expectEqual(0, part1(std.testing.allocator, test_input));
+    try std.testing.expectEqual(0, part2(std.testing.allocator, test_input));
 }

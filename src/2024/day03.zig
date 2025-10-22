@@ -66,6 +66,6 @@ const test_input2 =
 ;
 
 test {
-    try std.testing.expectEqual(161, part1(test_input));
-    try std.testing.expectEqual(48, part2(test_input2));
+    try std.testing.expectEqual(161, part1(std.testing.allocator, test_input));
+    try std.testing.expectEqual(48, part2(std.testing.allocator, test_input2));
 }

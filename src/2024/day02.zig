@@ -100,6 +100,6 @@ const test_input =
 ;
 
 test {
-    try std.testing.expectEqual(2, part1(test_input));
-    try std.testing.expectEqual(4, part2(test_input));
+    try std.testing.expectEqual(2, part1(std.testing.allocator, test_input));
+    try std.testing.expectEqual(4, part2(std.testing.allocator, test_input));
 }

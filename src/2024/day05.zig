@@ -312,6 +312,6 @@ const section_2 =
 ;
 
 test {
-    try std.testing.expectEqual(143, part1(test_input));
-    try std.testing.expectEqual(123, part2(test_input));
+    try std.testing.expectEqual(143, part1(std.testing.allocator, test_input));
+    try std.testing.expectEqual(123, part2(std.testing.allocator, test_input));
 }

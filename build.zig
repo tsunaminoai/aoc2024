@@ -39,17 +39,6 @@ pub fn build(b: *std.Build) void {
     // Track if we built anything
     var built_any = false;
 
-    // Create the main runner executable
-    const exe = b.addExecutable(.{
-        .name = "aoc",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
-    });
-    exe.root_module.addImport("util", util_mod);
-
     // Generate targets for each day
     for (1..26) |day| {
         const day_str = b.fmt("day{d:0>2}", .{day});
@@ -60,6 +49,16 @@ pub fn build(b: *std.Build) void {
             // std.log.info("skipping {s}/{s}", .{ year_option, day_str });
             continue; // Skip this day if file doesn't exist
         }
+        // Create the main runner executable
+        const exe = b.addExecutable(.{
+            .name = day_str,
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("src/main.zig"),
+                .target = target,
+                .optimize = optimize,
+            }),
+        });
+        exe.root_module.addImport("util", util_mod);
 
         built_any = true;
         // Check if day file exists
@@ -103,7 +102,7 @@ pub fn build(b: *std.Build) void {
         bench_cmd.addArg("--bench");
 
         const bench_step = b.step(
-            b.fmt("bench_{s}", .{day_str}),
+            b.fmt("{s}_bench", .{day_str}),
             b.fmt("Benchmark {s} ({s})", .{ day_str, year_option }),
         );
         bench_step.dependOn(&bench_cmd.step);
@@ -121,7 +120,7 @@ pub fn build(b: *std.Build) void {
 
         const run_tests = b.addRunArtifact(day_tests);
         const test_step = b.step(
-            b.fmt("test_{s}", .{day_str}),
+            b.fmt("{s}_test", .{day_str}),
             b.fmt("Test {s} ({s})", .{ day_str, year_option }),
         );
         test_step.dependOn(&run_tests.step);

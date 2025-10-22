@@ -181,6 +181,6 @@ test {
 }
 
 test {
-    try std.testing.expectEqual(1928, part1(test_input));
-    try std.testing.expectEqual(0, part2(test_input));
+    try std.testing.expectEqual(1928, part1(std.testing.allocator, test_input));
+    try std.testing.expectEqual(0, part2(std.testing.allocator, test_input));
 }
