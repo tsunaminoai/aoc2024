@@ -18,13 +18,13 @@ pub fn part1(in: []const u8) Error!i64 {
     defer _ = gpa.deinit();
     const alloc = gpa.allocator();
 
-    const rules = Rule.load(alloc, rules_section);
-    defer rules.deinit();
+    var rules = Rule.load(alloc, rules_section);
+    defer rules.deinit(alloc);
 
-    const updates = Update.load(alloc, updates_section);
+    var updates = Update.load(alloc, updates_section);
     defer {
-        for (updates.items) |up| up.deinit();
-        updates.deinit();
+        for (updates.items) |*up| up.deinit();
+        updates.deinit(alloc);
     }
 
     const valids = valid_updates(rules.items, updates);
@@ -67,12 +67,12 @@ const Rule = struct {
         };
     }
     pub fn load(alloc: std.mem.Allocator, in: []const u8) std.ArrayList(Rule) {
-        var rules = std.ArrayList(Rule).init(alloc);
-        errdefer rules.deinit();
+        var rules = std.ArrayList(Rule){};
+        errdefer rules.deinit(alloc);
         var line_iter = std.mem.splitScalar(u8, in, '\n');
         while (line_iter.next()) |line| {
             const rule = Rule.fromStr(line);
-            rules.append(rule) catch unreachable;
+            rules.append(alloc, rule) catch unreachable;
         }
         return rules;
     }
@@ -85,39 +85,41 @@ test {
     try std.testing.expect(rule.update_obeys_rule(&.{ 75, 47, 61, 53, 29 }));
     try std.testing.expect(!rule2.update_obeys_rule(&.{ 75, 97, 47, 61, 53 }));
 
-    const rules = Rule.load(std.testing.allocator, test_input[0..106]);
-    defer rules.deinit();
+    var rules = Rule.load(std.testing.allocator, test_input[0..106]);
+    defer rules.deinit(std.testing.allocator);
     // std.debug.print("{any}\n", .{rules.items});
 }
 
 const Update = struct {
     pages: std.ArrayList(i32),
+    allocator: std.mem.Allocator,
 
     pub fn init(alloc: std.mem.Allocator) Update {
         return Update{
-            .pages = std.ArrayList(i32).init(alloc),
+            .pages = .{},
+            .allocator = alloc,
         };
     }
-    pub fn deinit(self: Update) void {
-        self.pages.deinit();
+    pub fn deinit(self: *Update) void {
+        self.pages.deinit(self.allocator);
     }
     pub fn fromStr(self: *Update, in: []const u8) void {
         var list = std.mem.splitScalar(u8, in, ',');
         while (list.next()) |page| {
             const p = std.fmt.parseInt(i32, page, 10) catch unreachable;
-            self.pages.append(p) catch unreachable;
+            self.pages.append(self.allocator, p) catch unreachable;
         }
     }
     pub fn load(alloc: std.mem.Allocator, in: []const u8) std.ArrayList(Update) {
-        var udpates = std.ArrayList(Update).init(alloc);
-        errdefer udpates.deinit();
+        var udpates = std.ArrayList(Update){};
+        errdefer udpates.deinit(alloc);
         var line_iter = std.mem.splitScalar(u8, in, '\n');
         while (line_iter.next()) |line| {
             var update = Update.init(alloc);
             // std.debug.print("{s}\n", .{line});
             update.fromStr(line);
 
-            udpates.append(update) catch unreachable;
+            udpates.append(alloc, update) catch unreachable;
         }
         return udpates;
     }
@@ -128,8 +130,8 @@ test {
     const rule2 = Rule{ .page1 = 97, .page2 = 75 };
     var updates = Update.load(std.testing.allocator, section_2);
     defer {
-        for (updates.items) |up| up.deinit();
-        updates.deinit();
+        for (updates.items) |*up| up.deinit();
+        updates.deinit(std.testing.allocator);
     }
     // std.debug.print("{any}\n", .{updates.items});
     var up = Update.init(std.testing.allocator);
@@ -231,13 +233,13 @@ pub fn part2(in: []const u8) Error!i64 {
     defer _ = gpa.deinit();
     const alloc = gpa.allocator();
 
-    const rules = Rule.load(alloc, rules_section);
-    defer rules.deinit();
+    var rules = Rule.load(alloc, rules_section);
+    defer rules.deinit(alloc);
 
-    const updates = Update.load(alloc, updates_section);
+    var updates = Update.load(alloc, updates_section);
     defer {
-        for (updates.items) |up| up.deinit();
-        updates.deinit();
+        for (updates.items) |*up| up.deinit();
+        updates.deinit(alloc);
     }
 
     const valids = valid_updates(rules.items, updates);

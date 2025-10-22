@@ -123,14 +123,16 @@ const Processor = struct {
 
     intruction_pointer: usize = 0,
     isRunning: bool = true,
+    allocator: Allocator,
 
     pub fn init(alloc: Allocator, a: u64, b: u64, c: u64) Processor {
         return .{
+            .allocator = alloc,
             .A = a,
             .B = b,
             .C = c,
-            .tape = Array(Intruction).init(alloc),
-            .outputs = Array(u64).init(alloc),
+            .tape = Array(Intruction){},
+            .outputs = Array(u64){},
             .intruction_pointer = 0,
             .isRunning = true,
         };
@@ -138,7 +140,7 @@ const Processor = struct {
     pub fn load(self: *Processor, in: []const u8) !void {
         var iter = std.mem.splitScalar(u8, in, ',');
         while (iter.next()) |code| {
-            try self.tape.append(Intruction.fromInt(try std.fmt.parseInt(u3, code, 10)));
+            try self.tape.append(self.allocator, Intruction.fromInt(try std.fmt.parseInt(u3, code, 10)));
         }
     }
     pub fn run(self: *Processor) !void {
@@ -214,7 +216,7 @@ const Processor = struct {
             // The out instruction (opcode 5) calculates the value of its combo operand modulo 8, then outputs that value.
             //   (If a program outputs multiple values, they are separated by commas.)
             .out => {
-                try self.outputs.append(@mod(try self.get_operand(u64, false), 8));
+                try self.outputs.append(self.allocator, @mod(try self.get_operand(u64, false), 8));
             },
 
             // The bdv instruction (opcode 6) works exactly like the adv instruction except that the result is stored in the
@@ -237,8 +239,8 @@ const Processor = struct {
     }
 
     pub fn deinit(self: *Processor) void {
-        self.tape.deinit();
-        self.outputs.deinit();
+        self.tape.deinit(self.allocator);
+        self.outputs.deinit(self.allocator);
     }
 
     pub fn format(self: Processor, comptime fmt: []const u8, options: anytype, writer: anytype) !void {

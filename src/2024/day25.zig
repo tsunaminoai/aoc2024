@@ -104,12 +104,12 @@ pub fn part1(in: []const u8) Error!i64 {
     defer _ = gpa.deinit();
     const alloc = gpa.allocator();
 
-    var keys = Array(PinPattern).init(alloc);
-    var locks = Array(PinPattern).init(alloc);
+    var keys = Array(PinPattern){};
+    var locks = Array(PinPattern){};
 
     defer {
-        keys.deinit();
-        locks.deinit();
+        keys.deinit(alloc);
+        locks.deinit(alloc);
     }
 
     var pat_iter = std.mem.splitSequence(u8, in, "\n\n");
@@ -117,9 +117,9 @@ pub fn part1(in: []const u8) Error!i64 {
         if (pat.len == 0) continue;
         const p = PinPattern.init(pat);
         if (p.type == .Key)
-            keys.append(p) catch unreachable
+            keys.append(alloc, p) catch unreachable
         else
-            locks.append(p) catch unreachable;
+            locks.append(alloc, p) catch unreachable;
     }
 
     for (keys.items) |key| {

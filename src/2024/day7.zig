@@ -13,23 +13,25 @@ const Equation = struct {
     result: i64,
     operands: Array(i64),
     valid_mask: ?usize = null,
+    allocator: std.mem.Allocator,
 
     pub fn init(alloc: std.mem.Allocator, in: []const u8) !Equation {
         const colon = std.mem.indexOfScalar(u8, in, ':') orelse return error.InvalidEq;
         const res = try std.fmt.parseInt(i64, in[0..colon], 10);
-        var list = Array(i64).init(alloc);
+        var list = Array(i64){};
         var iter = std.mem.splitScalar(u8, in[colon + 2 ..], ' ');
         while (iter.next()) |num| {
-            try list.append(try std.fmt.parseInt(i64, num, 10));
+            try list.append(alloc, try std.fmt.parseInt(i64, num, 10));
         }
 
         return .{
+            .allocator = alloc,
             .result = res,
             .operands = list,
         };
     }
-    pub fn deinit(self: Equation) void {
-        self.operands.deinit();
+    pub fn deinit(self: *Equation) void {
+        self.operands.deinit(self.allocator);
     }
 
     pub fn format(self: Equation, _: anytype, _: anytype, writer: anytype) !void {
@@ -49,8 +51,8 @@ const Equation = struct {
         return op(self.operands.items[0], self.operands.items[1]);
     }
     pub fn can_be_evaluated(self: *Equation) !bool {
-        var opns = try self.operands.clone();
-        defer opns.deinit();
+        var opns = try self.operands.clone(self.allocator);
+        defer opns.deinit(self.allocator);
 
         var acc: i64 = 0;
         const num_operands = opns.items.len;

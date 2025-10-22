@@ -54,7 +54,8 @@ const Block = struct {
 var free_count: usize = 0;
 
 fn read_blocks(alloc: Allocator, line: []const u8) ![]Block {
-    var blocks = Array(Block).init(alloc);
+    var blocks = Array(Block){};
+    defer blocks.deinit(alloc);
     var idx: i64 = 0;
     free_count = 0;
 
@@ -64,7 +65,7 @@ fn read_blocks(alloc: Allocator, line: []const u8) ![]Block {
         if (@mod(i, 2) == 0) {
             const size = try std.fmt.parseInt(usize, &.{char}, 10);
             for (0..size) |_|
-                try blocks.append(Block{ .id = idx, .size = size });
+                try blocks.append(alloc, Block{ .id = idx, .size = size });
             idx += 1;
         }
         // free block
@@ -72,18 +73,19 @@ fn read_blocks(alloc: Allocator, line: []const u8) ![]Block {
             const size = try std.fmt.parseInt(usize, &.{char}, 10);
             free_count += size;
             for (0..size) |_|
-                try blocks.append(.{ .size = size });
+                try blocks.append(alloc, .{ .size = size });
         }
     }
-    return try blocks.toOwnedSlice();
+    return try blocks.toOwnedSlice(alloc);
 }
 
 fn fmt_blocks(alloc: Allocator, blocks: []const Block) ![]u8 {
-    var ret = try Array(u8).initCapacity(alloc, blocks.len);
+    var ret = Array(u8){};
+    defer ret.deinit(alloc);
     for (blocks) |b| {
-        try ret.appendNTimes(if (b.id) |_| 'X' else '.', b.size);
+        try ret.appendNTimes(alloc, if (b.id) |_| 'X' else '.', b.size);
     }
-    return try ret.toOwnedSlice();
+    return try ret.toOwnedSlice(alloc);
 }
 
 fn left_most_free(blocks: []Block, from: usize) usize {
