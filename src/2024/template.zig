@@ -10,12 +10,12 @@ pub const DayNumber = 0;
 pub const Answer1 = 0;
 pub const Answer2 = 0;
 
-pub fn part1(in: []const u8) f32 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) f32 {
     const ret: f32 = 0;
     _ = in;
     return ret;
 }
-pub fn part2(in: []const u8) f32 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) f32 {
     const ret: f32 = 0;
     _ = in;
     return ret;

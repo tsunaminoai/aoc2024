@@ -5,14 +5,14 @@ const tst = std.testing;
 const math = std.math;
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 pub const DayNumber = 17;
+pub const data = @embedFile("data/17.txt");
 
 pub const Answer1 = 0;
 pub const Answer2 = 0;
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const ret: i64 = 0;
     _ = in;
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -58,7 +58,7 @@ fn worker(start: usize, len: usize, results: *Array(i64)) void {
     }
 }
 
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const ret: i64 = 0;
     _ = in;
 

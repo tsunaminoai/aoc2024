@@ -2,14 +2,14 @@ const std = @import("std");
 const mvzr = @import("mvzr");
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 pub const DayNumber = 3;
+pub const data = @embedFile("data/3.txt");
 
 pub const Answer1 = 174336360;
 pub const Answer2 = 88802350;
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const regex = mvzr.Regex.compile("mul\\(([0-9]+),([0-9]+)\\)") orelse unreachable;
     var ret: i32 = 0;
     var line_iter = std.mem.splitScalar(u8, in, '\n');
@@ -29,7 +29,7 @@ pub fn part1(in: []const u8) Error!i64 {
     }
     return (ret);
 }
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const regex = mvzr.Regex.compile("do(n't)*\\(\\)|mul\\(([0-9]+),([0-9]+)\\)") orelse unreachable;
     var ret: i32 = 0;
     var line_iter = std.mem.splitScalar(u8, in, '\n');

@@ -1,7 +1,6 @@
 const std = @import("std");
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 const coord = struct {
     x: i32,
@@ -15,11 +14,12 @@ const coord = struct {
 };
 
 pub const DayNumber = 4;
+pub const data = @embedFile("data/4.txt");
 
 pub const Answer1 = 0;
 pub const Answer2 = 0;
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i64 = 0;
 
     const xmas = "XMAS";
@@ -106,7 +106,7 @@ inline fn get(in: []const u8, w: i32, c: coord) ?u8 {
     return in[@intCast(c.y * w + c.x)];
 }
 
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const ret: i64 = 0;
     _ = in;
     return ret;

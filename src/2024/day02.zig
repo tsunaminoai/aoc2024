@@ -1,9 +1,9 @@
 const std = @import("std");
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 pub const DayNumber = 2;
+pub const data = @embedFile("data/2.txt");
 
 pub const Answer1 = 359;
 pub const Answer2 = 418;
@@ -25,7 +25,7 @@ fn isSafe(levels: []i32) bool {
     return true;
 }
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i64 = 0;
     var report_it = std.mem.splitAny(u8, in, "\n");
 
@@ -51,7 +51,7 @@ pub fn part1(in: []const u8) Error!i64 {
 
     return ret;
 }
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i64 = 0;
     var report_it = std.mem.splitAny(u8, in, "\n");
 

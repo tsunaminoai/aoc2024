@@ -4,14 +4,14 @@ const tst = std.testing;
 const Allocator = std.mem.Allocator;
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 pub const DayNumber = 9;
+pub const data = @embedFile("data/9.txt");
 
 pub const Answer1 = 6154342787400;
 pub const Answer2 = 0;
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const alloc = gpa.allocator();
@@ -33,7 +33,7 @@ pub fn part1(in: []const u8) Error!i64 {
     std.debug.print("Checkum: {}\n", .{checksum(b)});
     return (checksum(b));
 }
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const ret: i64 = 0;
     _ = in;
     return ret;

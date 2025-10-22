@@ -5,9 +5,9 @@ const tst = std.testing;
 const math = std.math;
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 pub const DayNumber = 25;
+pub const data = @embedFile("data/25.txt");
 
 pub const Answer1 = 3307;
 pub const Answer2 = 0;
@@ -99,7 +99,7 @@ test "key" {
     try tst.expectEqualSlices(i16, expected, &p.heights);
 }
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i32 = 0;
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -134,7 +134,7 @@ pub fn part1(in: []const u8) Error!i64 {
 
     return (ret);
 }
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const ret: i64 = 0;
     _ = in;
     return ret;

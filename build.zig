@@ -8,8 +8,8 @@ pub fn build(b: *std.Build) void {
     const year_option = b.option(
         []const u8,
         "year",
-        "Advent of Code year to build (default: 2024)",
-    ) orelse "2024";
+        "Advent of Code year to build (default: 2025)",
+    ) orelse "2025";
 
     const mvzr = b.dependency("mvzr", .{});
 
@@ -39,32 +39,45 @@ pub fn build(b: *std.Build) void {
     // Track if we built anything
     var built_any = false;
 
+    // Create the main runner executable
+    const exe = b.addExecutable(.{
+        .name = "aoc",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    exe.root_module.addImport("util", util_mod);
+
     // Generate targets for each day
     for (1..26) |day| {
-        const day_str = b.fmt("day{}", .{day});
+        const day_str = b.fmt("day{d:0>2}", .{day});
         const src_path = b.fmt("src/{s}/{s}.zig", .{ year_option, day_str });
-
         // Check if source file exists
         const file_exists = checkFileExists(b, src_path);
         if (!file_exists) {
+            // std.log.info("skipping {s}/{s}", .{ year_option, day_str });
             continue; // Skip this day if file doesn't exist
         }
 
         built_any = true;
+        // Check if day file exists
+        if (!checkFileExists(b, src_path)) continue;
 
-        // Create executable for this day
-        const exe = b.addExecutable(.{
-            .name = day_str,
-            .root_module = b.createModule(.{
-                .root_source_file = b.path(src_path),
-                .target = target,
-                .optimize = optimize,
-            }),
+        // Create module for this day
+        const day_mod = b.addModule(day_str, .{
+            .root_source_file = b.path(src_path),
+            .target = target,
+            .optimize = optimize,
         });
+        day_mod.addImport("util", util_mod);
 
+        // Add to runner
+        exe.root_module.addImport("day", day_mod);
         // Add utilities module
-        exe.root_module.addImport("util", util_mod);
-        exe.root_module.addImport("mvzr", mvzr.module("mvzr"));
+        day_mod.addImport("util", util_mod);
+        day_mod.addImport("mvzr", mvzr.module("mvzr"));
 
         // Create install step
         const install = b.addInstallArtifact(exe, .{});
@@ -81,7 +94,7 @@ pub fn build(b: *std.Build) void {
             run_cmd.addArgs(args);
         }
 
-        const run_step = b.step(day_str, b.fmt("Run {s}", .{day_str}));
+        const run_step = b.step(day_str, b.fmt("Run {s} ({s})", .{ day_str, year_option }));
         run_step.dependOn(&run_cmd.step);
 
         // Create benchmark step for this day
@@ -91,7 +104,7 @@ pub fn build(b: *std.Build) void {
 
         const bench_step = b.step(
             b.fmt("bench_{s}", .{day_str}),
-            b.fmt("Benchmark {s}", .{day_str}),
+            b.fmt("Benchmark {s} ({s})", .{ day_str, year_option }),
         );
         bench_step.dependOn(&bench_cmd.step);
 
@@ -109,7 +122,7 @@ pub fn build(b: *std.Build) void {
         const run_tests = b.addRunArtifact(day_tests);
         const test_step = b.step(
             b.fmt("test_{s}", .{day_str}),
-            b.fmt("Test {s}", .{day_str}),
+            b.fmt("Test {s} ({s})", .{ day_str, year_option }),
         );
         test_step.dependOn(&run_tests.step);
 

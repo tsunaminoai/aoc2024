@@ -3,9 +3,9 @@ const Array = std.ArrayList;
 const tst = std.testing;
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 pub const DayNumber = 7;
+pub const data = @embedFile("data/7.txt");
 
 pub const Answer1 = 12553187650171;
 pub const Answer2 = 0;
@@ -119,7 +119,7 @@ fn Add(left: i64, right: i64) i64 {
 ///TODO: Evalate swappable operators
 ///TODO: Evalute if equation is solvable
 ///TODO: Output sum of solveable equations
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i64 = 0;
     var iter = std.mem.splitScalar(u8, in, '\n');
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -141,7 +141,7 @@ pub fn part1(in: []const u8) Error!i64 {
     // std.debug.print("{}\n", .{ret});
     return (ret);
 }
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const ret: i64 = 0;
     _ = in;
     return ret;

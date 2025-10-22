@@ -1,14 +1,14 @@
 const std = @import("std");
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 pub const DayNumber = 5;
+pub const data = @embedFile("data/5.txt");
 
 pub const Answer1 = 5713;
 pub const Answer2 = 5180;
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i32 = 0;
 
     const section_split = std.mem.indexOf(u8, in, "\n\n") orelse unreachable;
@@ -223,7 +223,7 @@ fn fixed_updates_middle_page_sum(rules: []const Rule, updates: std.ArrayList(Upd
     return sum;
 }
 
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i32 = 0;
 
     const section_split = std.mem.indexOf(u8, in, "\n\n") orelse unreachable;

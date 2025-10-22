@@ -5,14 +5,14 @@ const tst = std.testing;
 const math = std.math;
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
 
 pub const DayNumber = 22;
+pub const data = @embedFile("data/22.txt");
 
 pub const Answer1 = 14119253575;
 pub const Answer2 = 0;
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i64 = 0;
     var iter = std.mem.splitScalar(u8, in, '\n');
     while (iter.next()) |line| {
@@ -29,7 +29,7 @@ pub fn part1(in: []const u8) Error!i64 {
     // std.debug.print("{}\n", .{ret});
     return (ret);
 }
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     const ret: i64 = 0;
     _ = in;
     return ret;

@@ -1,8 +1,7 @@
 const std = @import("std");
 const lib = @import("lib.zig");
 const Error = lib.Error;
-pub const main = @import("main.zig").main;
-
+pub const data = @embedFile("data/1.txt");
 pub const DayNumber = 1;
 
 pub const Answer1 = 2164381;
@@ -12,7 +11,7 @@ fn isLessThan(_: @TypeOf(.{}), a: i32, b: i32) bool {
     return a < b;
 }
 
-pub fn part1(in: []const u8) Error!i64 {
+pub fn part1(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i64 = 0;
     var line_it = std.mem.splitAny(u8, in, "\n");
 
@@ -41,7 +40,7 @@ pub fn part1(in: []const u8) Error!i64 {
     }
     return ret;
 }
-pub fn part2(in: []const u8) Error!i64 {
+pub fn part2(_: std.mem.Allocator, in: []const u8) Error!i64 {
     var ret: i32 = 0;
     var line_it = std.mem.splitAny(u8, in, "\n");
 
