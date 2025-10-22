@@ -1,6 +1,7 @@
 const std = @import("std");
 const lib = @import("lib.zig");
 const Error = lib.Error;
+pub const main = @import("main.zig").main;
 
 pub const DayNumber = 2;
 
@@ -36,11 +37,11 @@ pub fn part1(in: []const u8) Error!i64 {
     while (report_it.next()) |line| {
         if (line.len == 0) break;
         var list = std.mem.splitAny(u8, line, " ");
-        var num_list = std.ArrayList(i32).init(alloc);
-        defer num_list.deinit();
+        var num_list = std.ArrayList(i32){};
+        defer num_list.deinit(alloc);
 
         while (list.next()) |tok|
-            num_list.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
+            num_list.append(alloc, std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
 
         if (isSafe(num_list.items)) {
             //             std.debug.print("Report '{s}' is safe\n", .{line});
@@ -62,11 +63,11 @@ pub fn part2(in: []const u8) Error!i64 {
     while (report_it.next()) |line| {
         if (line.len == 0) break;
         var list = std.mem.splitAny(u8, line, " ");
-        var num_list = std.ArrayList(i32).init(alloc);
-        defer num_list.deinit();
+        var num_list = std.ArrayList(i32){};
+        defer num_list.deinit(alloc);
 
         while (list.next()) |tok|
-            num_list.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
+            num_list.append(alloc, std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
 
         if (isSafe(num_list.items)) {
             //             std.debug.print("Report '{s}' is safe\n", .{line});
@@ -74,8 +75,8 @@ pub fn part2(in: []const u8) Error!i64 {
         } else {
             const len = num_list.items.len;
             blk: for (0..len) |i| {
-                var tmp = num_list.clone() catch unreachable;
-                defer tmp.deinit();
+                var tmp = num_list.clone(alloc) catch unreachable;
+                defer tmp.deinit(alloc);
                 _ = tmp.orderedRemove(i);
                 if (isSafe(tmp.items)) {
                     //                     std.debug.print("Report '{s}' is safe by removing level {}\n", .{line, i+1});

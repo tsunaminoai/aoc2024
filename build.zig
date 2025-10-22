@@ -10,11 +10,16 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
-    const lib = b.addStaticLibrary(.{
-        .name = "aoc",
+    const root_mod = b.addModule("root", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
+    });
+
+    const lib = b.addLibrary(.{
+        .name = "aoc",
+        .root_module = root_mod,
+        .linkage = .static,
     });
 
     b.installArtifact(lib);
@@ -26,22 +31,19 @@ pub fn build(b: *std.Build) !void {
             // std.log.info("Skipping: {s} (not found)", .{day_file});
             continue;
         };
+        const day_mod = b.addModule(b.fmt("day{}", .{n}), .{
+            .root_source_file = b.path(day_file),
+            .target = target,
+            .optimize = optimize,
+        });
+        day_mod.addImport("mvzr", mvzr_dep.module("mvzr"));
         const exe = b.addExecutable(.{
             .name = b.fmt("aoc_{}", .{n}),
-            .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
+            .root_module = day_mod,
         });
-        const day_mod = b.addSharedLibrary(.{
-            .name = "day",
-            .target = target,
-            .optimize = optimize,
-            .root_source_file = b.path(day_file),
-        });
-        day_mod.root_module.addImport("mvzr", mvzr_dep.module("mvzr"));
         exe.linkLibrary(lib);
-        exe.linkLibrary(day_mod);
-        exe.root_module.addImport("day", &day_mod.root_module);
+        exe.root_module.addImport("aoc", root_mod);
+        exe.root_module.addImport("day", day_mod);
         b.installArtifact(exe);
         const run_cmd = b.addRunArtifact(exe);
         run_cmd.step.dependOn(b.getInstallStep());
@@ -50,11 +52,8 @@ pub fn build(b: *std.Build) !void {
         run_all_step.dependOn(run_step);
 
         const day_tests = b.addTest(.{
-            .root_source_file = b.path(day_file),
-            .target = target,
-            .optimize = optimize,
+            .root_module = day_mod,
         });
-        day_tests.root_module.addImport("mvzr", mvzr_dep.module("mvzr"));
 
         const run_day_tests = b.addRunArtifact(day_tests);
 
@@ -64,18 +63,21 @@ pub fn build(b: *std.Build) !void {
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.
     const lib_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = root_mod,
     });
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
     const exe_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.addModule("exe_test", .{
+            .root_source_file = b.path("src/main.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
+    exe_unit_tests.root_module.addImport("aoc", root_mod);
+    exe_unit_tests.linkLibrary(lib);
+    exe_unit_tests.root_module.addImport("mzvr", mvzr_dep.module("mvzr"));
 
     const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
 

@@ -5,6 +5,8 @@ const tst = std.testing;
 const math = std.math;
 const lib = @import("lib.zig");
 const Error = lib.Error;
+pub const main = @import("main.zig").main;
+
 pub const DayNumber = 17;
 
 pub const Answer1 = 0;
@@ -22,12 +24,12 @@ pub fn part1(in: []const u8) Error!i64 {
     p.load("2,4,1,2,7,5,4,1,1,3,5,5,0,3,3,0") catch unreachable;
     p.run() catch unreachable;
 
-    var str = Array(u8).init(alloc);
-    defer str.deinit();
+    var str = Array(u8){};
+    defer str.deinit(alloc);
     for (p.outputs.items, 0..) |o, i| {
-        str.append(@intCast(o + 48)) catch unreachable;
+        str.append(alloc, @intCast(o + 48)) catch unreachable;
         if (i < p.outputs.items.len - 1) {
-            str.append(',') catch unreachable;
+            str.append(alloc, ',') catch unreachable;
         }
     }
     std.debug.print("'{s}'\n", .{str.items});
@@ -51,7 +53,7 @@ fn worker(start: usize, len: usize, results: *Array(i64)) void {
         p.run() catch {};
 
         if (std.mem.eql(u64, p.outputs.items, &.{ 2, 4, 1, 2, 7, 5, 4, 1, 1, 3, 5, 5, 0, 3, 3, 0 })) {
-            results.append(@intCast(inputA)) catch unreachable;
+            results.append(alloc, @intCast(inputA)) catch unreachable;
         }
     }
 }
@@ -77,8 +79,8 @@ pub fn part2(in: []const u8) Error!i64 {
     var wait_group: std.Thread.WaitGroup = undefined;
     wait_group.reset();
 
-    var results = Array(i64).init(alloc);
-    defer results.deinit();
+    var results = Array(i64){};
+    defer results.deinit(alloc);
 
     // var idx: usize = 40_900_000;
     // while (idx < 100_000_000) {
@@ -123,14 +125,16 @@ const Processor = struct {
 
     intruction_pointer: usize = 0,
     isRunning: bool = true,
+    allocator: Allocator,
 
     pub fn init(alloc: Allocator, a: u64, b: u64, c: u64) Processor {
         return .{
+            .allocator = alloc,
             .A = a,
             .B = b,
             .C = c,
-            .tape = Array(Intruction).init(alloc),
-            .outputs = Array(u64).init(alloc),
+            .tape = Array(Intruction){},
+            .outputs = Array(u64){},
             .intruction_pointer = 0,
             .isRunning = true,
         };
@@ -138,7 +142,7 @@ const Processor = struct {
     pub fn load(self: *Processor, in: []const u8) !void {
         var iter = std.mem.splitScalar(u8, in, ',');
         while (iter.next()) |code| {
-            try self.tape.append(Intruction.fromInt(try std.fmt.parseInt(u3, code, 10)));
+            try self.tape.append(self.allocator, Intruction.fromInt(try std.fmt.parseInt(u3, code, 10)));
         }
     }
     pub fn run(self: *Processor) !void {
@@ -214,7 +218,7 @@ const Processor = struct {
             // The out instruction (opcode 5) calculates the value of its combo operand modulo 8, then outputs that value.
             //   (If a program outputs multiple values, they are separated by commas.)
             .out => {
-                try self.outputs.append(@mod(try self.get_operand(u64, false), 8));
+                try self.outputs.append(self.allocator, @mod(try self.get_operand(u64, false), 8));
             },
 
             // The bdv instruction (opcode 6) works exactly like the adv instruction except that the result is stored in the
@@ -237,8 +241,8 @@ const Processor = struct {
     }
 
     pub fn deinit(self: *Processor) void {
-        self.tape.deinit();
-        self.outputs.deinit();
+        self.tape.deinit(self.allocator);
+        self.outputs.deinit(self.allocator);
     }
 
     pub fn format(self: Processor, comptime fmt: []const u8, options: anytype, writer: anytype) !void {

@@ -1,6 +1,7 @@
 const std = @import("std");
 const lib = @import("lib.zig");
 const Error = lib.Error;
+pub const main = @import("main.zig").main;
 
 pub const DayNumber = 1;
 
@@ -20,17 +21,17 @@ pub fn part1(in: []const u8) Error!i64 {
 
     const alloc = fba.allocator();
 
-    var list1 = std.ArrayList(i32).init(alloc);
-    defer list1.deinit();
-    var list2 = std.ArrayList(i32).init(alloc);
-    defer list2.deinit();
+    var list1 = std.ArrayList(i32){};
+    defer list1.deinit(alloc);
+    var list2 = std.ArrayList(i32){};
+    defer list2.deinit(alloc);
     while (line_it.next()) |line| {
         var tok_it = std.mem.tokenizeAny(u8, line, " ");
         var tok = tok_it.next() orelse "0";
 
-        list1.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
+        list1.append(alloc, std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
         tok = tok_it.next() orelse "0";
-        list2.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
+        list2.append(alloc, std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
     }
     std.mem.sort(i32, list1.items, .{}, isLessThan);
     std.mem.sort(i32, list2.items, .{}, isLessThan);
@@ -49,17 +50,17 @@ pub fn part2(in: []const u8) Error!i64 {
 
     const alloc = fba.allocator();
 
-    var list1 = std.ArrayList(i32).init(alloc);
-    defer list1.deinit();
-    var list2 = std.ArrayList(i32).init(alloc);
-    defer list2.deinit();
+    var list1 = std.ArrayList(i32){};
+    defer list1.deinit(alloc);
+    var list2 = std.ArrayList(i32){};
+    defer list2.deinit(alloc);
     while (line_it.next()) |line| {
         var tok_it = std.mem.tokenizeAny(u8, line, " ");
         var tok = tok_it.next() orelse break;
 
-        list1.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
+        list1.append(alloc, std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
         tok = tok_it.next() orelse break;
-        list2.append(std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
+        list2.append(alloc, std.fmt.parseInt(i32, tok, 10) catch unreachable) catch unreachable;
     }
 
     for (list1.items) |num| {
