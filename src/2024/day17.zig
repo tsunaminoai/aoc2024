@@ -5,6 +5,8 @@ const tst = std.testing;
 const math = std.math;
 const lib = @import("lib.zig");
 const Error = lib.Error;
+pub const main = @import("main.zig").main;
+
 pub const DayNumber = 17;
 
 pub const Answer1 = 0;
@@ -22,12 +24,12 @@ pub fn part1(in: []const u8) Error!i64 {
     p.load("2,4,1,2,7,5,4,1,1,3,5,5,0,3,3,0") catch unreachable;
     p.run() catch unreachable;
 
-    var str = Array(u8).init(alloc);
-    defer str.deinit();
+    var str = Array(u8){};
+    defer str.deinit(alloc);
     for (p.outputs.items, 0..) |o, i| {
-        str.append(@intCast(o + 48)) catch unreachable;
+        str.append(alloc, @intCast(o + 48)) catch unreachable;
         if (i < p.outputs.items.len - 1) {
-            str.append(',') catch unreachable;
+            str.append(alloc, ',') catch unreachable;
         }
     }
     std.debug.print("'{s}'\n", .{str.items});
@@ -51,7 +53,7 @@ fn worker(start: usize, len: usize, results: *Array(i64)) void {
         p.run() catch {};
 
         if (std.mem.eql(u64, p.outputs.items, &.{ 2, 4, 1, 2, 7, 5, 4, 1, 1, 3, 5, 5, 0, 3, 3, 0 })) {
-            results.append(@intCast(inputA)) catch unreachable;
+            results.append(alloc, @intCast(inputA)) catch unreachable;
         }
     }
 }
@@ -77,8 +79,8 @@ pub fn part2(in: []const u8) Error!i64 {
     var wait_group: std.Thread.WaitGroup = undefined;
     wait_group.reset();
 
-    var results = Array(i64).init(alloc);
-    defer results.deinit();
+    var results = Array(i64){};
+    defer results.deinit(alloc);
 
     // var idx: usize = 40_900_000;
     // while (idx < 100_000_000) {

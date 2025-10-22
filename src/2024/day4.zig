@@ -1,6 +1,7 @@
 const std = @import("std");
 const lib = @import("lib.zig");
 const Error = lib.Error;
+pub const main = @import("main.zig").main;
 
 const coord = struct {
     x: i32,

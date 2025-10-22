@@ -4,6 +4,7 @@ const tst = std.testing;
 const Allocator = std.mem.Allocator;
 const lib = @import("lib.zig");
 const Error = lib.Error;
+pub const main = @import("main.zig").main;
 
 pub const DayNumber = 9;
 

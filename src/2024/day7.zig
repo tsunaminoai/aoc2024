@@ -3,6 +3,7 @@ const Array = std.ArrayList;
 const tst = std.testing;
 const lib = @import("lib.zig");
 const Error = lib.Error;
+pub const main = @import("main.zig").main;
 
 pub const DayNumber = 7;
 
@@ -124,8 +125,8 @@ pub fn part1(in: []const u8) Error!i64 {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const alloc = gpa.allocator();
-    var eqs = Array(Equation).init(alloc);
-    defer eqs.deinit();
+    var eqs = Array(Equation){};
+    defer eqs.deinit(alloc);
 
     while (iter.next()) |line| {
         if (line.len == 0) continue;

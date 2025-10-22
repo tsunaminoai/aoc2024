@@ -42,6 +42,7 @@ pub fn build(b: *std.Build) !void {
             .root_module = day_mod,
         });
         exe.linkLibrary(lib);
+        exe.root_module.addImport("aoc", root_mod);
         exe.root_module.addImport("day", day_mod);
         b.installArtifact(exe);
         const run_cmd = b.addRunArtifact(exe);
