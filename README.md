@@ -19,9 +19,12 @@ devbox run <script>
 ## Scripts
 Scripts are custom commands that can be run using this project's environment. This project has the following scripts:
 
+* [debug](#devbox-run-debug)
 * [fast](#devbox-run-fast)
 * [safe](#devbox-run-safe)
+* [small](#devbox-run-small)
 * [test](#devbox-run-test)
+* [test-watch](#devbox-run-test-watch)
 
 ## Shell Init Hook
 The Shell Init Hook is a script that runs whenever the devbox environment is instantiated. It runs 
@@ -32,11 +35,17 @@ echo 'Welcome to devbox!' > /dev/null
 
 ## Packages
 
-* [zig@0.13.0](https://www.nixhub.io/packages/zig)
-* [zls@latest](https://www.nixhub.io/packages/zls)
+* [zig@0.15.1](https://www.nixhub.io/packages/zig)
+* [zls@0.15.0](https://www.nixhub.io/packages/zls)
 * [watchexec@latest](https://www.nixhub.io/packages/watchexec)
 
 ## Script Details
+
+### devbox run debug
+```sh
+zig build -Doptimize=Debug run
+```
+&ensp;
 
 ### devbox run fast
 ```sh
@@ -50,9 +59,21 @@ zig build -Doptimize=ReleaseSafe run
 ```
 &ensp;
 
+### devbox run small
+```sh
+zig build -Doptimize=ReleaseSmall run
+```
+&ensp;
+
 ### devbox run test
 ```sh
 zig build -Doptimize=Debug test
+```
+&ensp;
+
+### devbox run test-watch
+```sh
+zig build --watch test
 ```
 &ensp;
 

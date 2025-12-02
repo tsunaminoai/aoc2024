@@ -9,7 +9,7 @@
       "small": ["zig build -Doptimize=ReleaseSmall run"],
       "debug": ["zig build -Doptimize=Debug run"],
       "test": ["zig build -Doptimize=Debug test"],
-      "test-watch": ["watchexec -c --exts zig --ignore .zig-cache 'devbox run test'"]
+      "test-watch": ["zig build --watch test"]
     }
   }
 }
