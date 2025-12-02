@@ -3,8 +3,8 @@ const util = @import("util");
 const mvzr = @import("mvzr");
 
 // Automatically embedded at compile time
-pub const data = @embedFile("data/day01.txt");
-pub const DayNumber = 1;
+pub const data = @embedFile("data/day02.txt");
+pub const DayNumber = 2;
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     _ = allocator;
