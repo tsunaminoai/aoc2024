@@ -1,6 +1,10 @@
 const std = @import("std");
 const util = @import("util");
 const mvzr = @import("mvzr");
+const Array = std.ArrayList;
+const Allocator = std.mem.Allocator;
+const tst = std.testing;
+const math = std.math;
 
 // Automatically embedded at compile time
 pub const data = @embedFile("data/day01.txt");
