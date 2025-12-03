@@ -11,13 +11,13 @@ pub const data = @embedFile("data/day03.txt");
 pub const DayNumber = 3;
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    const result: i64 = 0;
+    var result: i64 = 0;
 
     var lines = std.mem.tokenizeScalar(u8, input, '\n');
     while (lines.next()) |line| {
         var b = try Bank.init(allocator, line);
         defer b.deinit();
-
+        result += try b.getMaxJoltage();
         // std.debug.print("{any}\n", .{b});
     }
 
@@ -69,17 +69,31 @@ const Bank = struct {
         return try std.fmt.parseInt(i64, ret.items, 10);
     }
 
-    pub fn getMax(self: Bank) !i64 {
+    /// Finds the largest possible joltage for the bank
+    /// Slides from the left and right looking for the largest number
+    /// When both sides are defined, the answer is produced.
+    pub fn getMaxJoltage(self: Bank) !i64 {
         var ret: i64 = 0;
-        var b = try self.batteries.clone(self.alloc);
-        defer b.deinit(self.alloc);
-
-        for (b.items[1..b.items.len], 1..) |j, i| {
-            if (j.joltage < b.items[i - 1].joltage) _ = b.orderedRemove(i);
+        var left: i64 = 0;
+        var right: i64 = 0;
+        var idx: usize = 0;
+        var pos: usize = 0;
+        while (idx < self.batteries.items.len - 1) : (idx += 1) {
+            if (self.batteries.items[idx].joltage > left) {
+                left = self.batteries.items[idx].joltage;
+                pos = idx;
+            }
         }
-        std.debug.print("{}\n", .{b});
-        ret += b.items[0].joltage * 10;
-        ret += b.items[1].joltage;
+        // std.debug.print("pos: {} jolt: {}\n", .{ pos, self.batteries.items[pos].joltage });
+        idx = self.batteries.items.len - 1;
+        while (idx > 0) : (idx -= 1) {
+            if (self.batteries.items[idx].joltage > right and idx > pos) {
+                right = self.batteries.items[idx].joltage;
+            }
+        }
+
+        ret = left * 10 + right;
+
         return ret;
     }
 };
@@ -90,20 +104,30 @@ const test_input =
     \\818181911112111
 ;
 
+pub fn testJoltage(expected: i64, str: []const u8) !void {
+    var b = try Bank.init(tst.allocator, str);
+    defer b.deinit();
+    try tst.expectEqual(expected, try b.getMaxJoltage());
+}
+
 test "joltage for bank" {
     var b = try Bank.init(tst.allocator, "12345");
     defer b.deinit();
     b.batteries.items[1].enabled = true;
     b.batteries.items[3].enabled = true;
     try tst.expectEqual(24, try b.joltage());
-    try tst.expectEqual(45, try b.getMax());
+
+    try testJoltage(98, "987654321111111");
+    try testJoltage(89, "811111111111119");
+    try testJoltage(78, "234234234234278");
+    try testJoltage(92, "818181911112111");
 }
 
 test "part 1" {
     const example = test_input;
 
     const result = try part1(std.testing.allocator, example);
-    try std.testing.expectEqual(@as(i64, 0), result);
+    try std.testing.expectEqual(@as(i64, 357), result);
 }
 
 test "part 2" {
