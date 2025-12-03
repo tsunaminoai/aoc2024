@@ -93,7 +93,7 @@ fn benchmarkDay(
     daynum: u8,
 ) !void {
     const input = day_module.data;
-    const iterations: usize = 1000;
+    const iterations: usize = 100;
 
     try stdout.print("Day {d:>2} Benchmark ({d} iterations):\n", .{ daynum, iterations });
 

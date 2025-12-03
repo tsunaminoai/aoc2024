@@ -66,7 +66,7 @@ pub fn isValidID(str: []const u8) bool {
         for (i + 1..str.len) |j| {
             if (str[i] == str[j]) return false;
         }
-        i += 1;
+        // i += 1;
     }
     return true;
 }

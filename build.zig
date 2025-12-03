@@ -34,6 +34,7 @@ pub fn build(b: *std.Build) void {
 
     // Build all days step
     const all_step = b.step("all", "Build all available days");
+    const all_bench_step = b.step("bench", "Bench run all available days");
     const all_tests_step = b.step("test", "Run all tests");
 
     // Track if we built anything
@@ -106,6 +107,7 @@ pub fn build(b: *std.Build) void {
             b.fmt("Benchmark {s} ({s})", .{ day_str, year_option }),
         );
         bench_step.dependOn(&bench_cmd.step);
+        all_bench_step.dependOn(bench_step);
 
         // Create test step for this day
         const day_tests = b.addTest(.{
