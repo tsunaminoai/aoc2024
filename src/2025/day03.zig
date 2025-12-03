@@ -43,6 +43,15 @@ const Battery = struct {
     pub fn isLessThan(_: @TypeOf(.{}), self: Battery, other: Battery) bool {
         return self.joltage < other.joltage;
     }
+    pub fn format(
+        self: Battery,
+        writer: *std.Io.Writer,
+    ) std.Io.Writer.Error!void {
+        if (self.enabled)
+            try writer.print("\x1B[1m{c}\x1B[0m", .{@as(u8, @intCast(self.joltage)) + '0'})
+        else
+            try writer.print("\x1B[2m{c}\x1B[0m", .{@as(u8, @intCast(self.joltage)) + '0'});
+    }
 };
 const Bank = struct {
     batteries: Array(Battery) = .{},
@@ -78,23 +87,34 @@ const Bank = struct {
         var right: i64 = 0;
         var idx: usize = 0;
         var pos: usize = 0;
+        var posr: usize = 0;
         while (idx < self.batteries.items.len - 1) : (idx += 1) {
             if (self.batteries.items[idx].joltage > left) {
                 left = self.batteries.items[idx].joltage;
                 pos = idx;
             }
         }
+        self.batteries.items[pos].enabled = true;
         // std.debug.print("pos: {} jolt: {}\n", .{ pos, self.batteries.items[pos].joltage });
         idx = self.batteries.items.len - 1;
         while (idx > 0) : (idx -= 1) {
-            if (self.batteries.items[idx].joltage > right and idx > pos) {
+            if (self.batteries.items[idx].joltage >= right and idx > pos) {
                 right = self.batteries.items[idx].joltage;
+                posr = idx;
             }
         }
+        self.batteries.items[posr].enabled = true;
 
         ret = left * 10 + right;
 
         return ret;
+    }
+    pub fn format(
+        self: @This(),
+        writer: *std.Io.Writer,
+    ) std.Io.Writer.Error!void {
+        for (self.batteries.items) |b|
+            try b.format(writer);
     }
 };
 const test_input =
@@ -108,6 +128,7 @@ pub fn testJoltage(expected: i64, str: []const u8) !void {
     var b = try Bank.init(tst.allocator, str);
     defer b.deinit();
     try tst.expectEqual(expected, try b.getMaxJoltage());
+    std.debug.print("{f}\n", .{b});
 }
 
 test "joltage for bank" {
