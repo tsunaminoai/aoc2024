@@ -61,12 +61,12 @@ pub fn checkRange(alloc: Allocator, str: []const u8) !i64 {
 /// each range gives its first ID and last ID separated by a dash (-).
 /// Invalid IDs have duplicate digits
 pub fn isValidID(str: []const u8) bool {
-    for (1..str.len) |i| {
-        const ned = str[i..];
-        std.debug.print("{s} in {s}\n", .{ ned, str });
-        if (std.mem.count(u8, str[1..], ned) != 1) {
-            return false;
+    if (@mod(str.len, 2) != 0) return true;
+    for (0..str.len - 1) |i| {
+        for (i + 1..str.len) |j| {
+            if (str[i] == str[j]) return false;
         }
+        i += 1;
     }
     return true;
 }
@@ -79,7 +79,9 @@ test "valid ID" {
     try tst.expect(!isValidID("11"));
     try tst.expect(!isValidID("22"));
     try tst.expect(!isValidID("99"));
-    try tst.expect(!isValidID("998"));
+    try tst.expect(isValidID("998"));
+    try tst.expect(!isValidID("1010"));
+    try tst.expect(isValidID("999"));
     try tst.expect(!isValidID("1212"));
     try tst.expect(!isValidID("99991199"));
 }
