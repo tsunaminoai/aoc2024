@@ -11,16 +11,14 @@ pub const data = @embedFile("data/day04.txt");
 pub const DayNumber = 4;
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    var result: i64 = 0;
+    const result: i64 = 0;
 
     var grid = try PaperGrid.init(allocator, input);
     defer grid.deinit();
 
-    for (0..grid.height) |h| {
-        for (0..grid.width) |w| {
-            if (grid.canRollBeMoved(h, w)) result += 1;
-        }
-    }
+    try grid.process();
+
+    std.debug.print("\n\n{f}\n", .{grid});
 
     return result;
 }
@@ -37,31 +35,79 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     return result;
 }
-const Roll = u8;
+const Cell = struct {
+    kind: Kind,
+    remove: bool,
+
+    const Kind = enum(u8) {
+        empty = '.',
+        roll = '@',
+    };
+
+    pub fn init(char: u8) !Cell {
+        return .{
+            .kind = @enumFromInt(char),
+            .remove = false,
+        };
+    }
+
+    pub fn format(
+        self: @This(),
+        writer: *std.Io.Writer,
+    ) std.Io.Writer.Error!void {
+        switch (self.kind) {
+            .empty => try writer.writeAll("."),
+            .roll => if (self.remove)
+                try writer.writeAll("x")
+            else
+                try writer.writeAll("@"),
+        }
+        try writer.flush();
+    }
+};
 const PaperGrid = struct {
     width: usize = 0,
     height: usize = 0,
 
-    rolls: Array(Roll) = .{},
+    cells: Array(Cell) = .{},
     alloc: Allocator,
+
+    pub fn remove(self: *PaperGrid, y: usize, x: usize) void {
+        self.cells.items[self.idx(y, x)].remove = true;
+    }
+
+    fn idx(self: PaperGrid, y: usize, x: usize) usize {
+        return (y * self.width) + x;
+    }
 
     pub fn init(alloc: Allocator, str: []const u8) !PaperGrid {
         return .{
             .alloc = alloc,
             .width = std.mem.indexOfScalar(u8, str, '\n') orelse return error.InvalidInput,
             .height = std.mem.count(u8, str, "\n"),
-            .rolls = blk: {
-                var r = Array(Roll){};
+            .cells = blk: {
+                var c = Array(Cell){};
                 var lines = std.mem.tokenizeScalar(u8, str, '\n');
                 while (lines.next()) |line| {
-                    try r.appendSlice(alloc, line);
+                    for (line[0..line.len]) |ch| {
+                        try c.append(alloc, try Cell.init(ch));
+                    }
                 }
-                break :blk r;
+                break :blk c;
             },
         };
     }
     pub fn deinit(self: *PaperGrid) void {
-        self.rolls.deinit(self.alloc);
+        self.cells.deinit(self.alloc);
+    }
+    pub fn process(self: *PaperGrid) !void {
+        for (0..self.height) |y| {
+            for (0..self.width) |x| {
+                if (self.canRollBeMoved(y, x)) {
+                    self.remove(y, x);
+                }
+            }
+        }
     }
 
     fn neighbors(self: PaperGrid, y: usize, x: usize) [8]?usize {
@@ -86,15 +132,17 @@ const PaperGrid = struct {
         return n;
     }
     pub fn canRollBeMoved(self: PaperGrid, y: usize, x: usize) bool {
-        const idx = (y * self.width) + x;
-        if (idx >= self.rolls.items.len) return false;
+        if (self.idx(y, x) >= self.cells.items.len) return false;
         // std.debug.print("{c}", .{self.rolls.items[idx]});
-        if (self.rolls.items[idx] != '@') return false;
+        if (self.cells.items[self.idx(y, x)].kind != .roll) return false;
         const n = self.neighbors(y, x);
         var count: usize = 0;
-        for (n) |ridx| {
-            if (ridx) |r| {
-                if (self.rolls.items[r] == '@') count += 1;
+        for (n) |cidx| {
+            if (cidx) |r| {
+                const cell = self.cells.items[r];
+                if (cell.kind == .roll) {
+                    count += 1;
+                }
             }
         }
 
@@ -105,16 +153,14 @@ const PaperGrid = struct {
         self: @This(),
         writer: *std.Io.Writer,
     ) std.Io.Writer.Error!void {
-        for (self.rolls.items, 0..) |r, i| {
-            switch (r) {
-                '.' => try writer.print("_", .{}),
-                '@' => try writer.print("#", .{}),
-                else => {},
+        for (0..self.cells.items.len - 1) |i| {
+            const c = self.cells.items[i];
+            try c.format(writer);
+            try writer.flush();
+            if (@mod(i + 1, self.width) == 0) {
+                try writer.writeAll("\n");
             }
-            if (@mod(i, self.width - 1) == 0 and i != 0) {
-                try writer.print("\n", .{});
-                try writer.flush();
-            }
+            try writer.flush();
         }
     }
 };
@@ -134,6 +180,18 @@ const test_input =
     \\@.@.@@@.@.
 ;
 
+const expected_removal =
+    \\..xx.xx@x.
+    \\x@@.@.@.@@
+    \\@@@@@.x.@@
+    \\@.@@@@..@.
+    \\x@.@@@@.@x
+    \\.@@@@@@@.@
+    \\.@.@.@.@@@
+    \\x.@@@.@@@@
+    \\.@@@@@@@@.
+    \\x.x.@@@.x.
+;
 test "neighbors" {
     var g = try PaperGrid.init(tst.allocator, test_input);
     defer g.deinit();
@@ -144,15 +202,23 @@ test "neighbors" {
 test "Paper Grid" {
     var g = try PaperGrid.init(tst.allocator, test_input);
     defer g.deinit();
+    try tst.expectEqual(10, g.width);
     try tst.expect(!g.canRollBeMoved(0, 0)); // nothing there
     try tst.expect(g.canRollBeMoved(0, 3)); // can be moved
     try tst.expect(!g.canRollBeMoved(1, 1)); // cant be moved
 
+    try g.process();
+
+    const str = try std.fmt.allocPrint(tst.allocator, "{f}", .{g});
+    defer tst.allocator.free(str);
+
+    try tst.expectEqualStrings(expected_removal, str);
 }
 test "part 1" {
     const example = test_input;
 
     const result = try part1(std.testing.allocator, example);
+
     try std.testing.expectEqual(@as(i64, 13), result);
 }
 
