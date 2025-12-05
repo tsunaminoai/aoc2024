@@ -98,26 +98,34 @@ const Database = struct {
         try self.ranges.append(self.alloc, newRange);
     }
     pub fn optimize(self: *Database) !void {
-        std.debug.print("Starting with {} records.", .{self.ranges.items.len});
-        blk: while (true) {
-            var idx: usize = 0;
-            std.mem.sort(Range, self.ranges.items, .{}, Range.isLessThan);
-            while (idx < self.ranges.items.len) : (idx += 1) {
-                const t = self.ranges.items[idx];
-                for (idx + 1..self.ranges.items.len) |rdx| {
-                    const r = self.ranges.items[rdx];
-                    if (r.contains(t.start) or r.contains(t.stop)) {
-                        self.ranges.items[rdx].start = if (t.start < r.start) t.start else r.start;
-                        self.ranges.items[rdx].stop = if (t.stop > r.stop) t.stop else r.stop;
-                        _ = self.ranges.orderedRemove(idx);
-                        continue :blk;
-                    }
-                }
+        if (self.ranges.items.len == 0) return;
+
+        // std.debug.print("Starting with {} records.\n", .{self.ranges.items.len});
+
+        // Sort by start position
+        std.mem.sort(Range, self.ranges.items, .{}, Range.isLessThan);
+
+        // Single pass merge
+        var write_idx: usize = 0;
+        for (1..self.ranges.items.len) |read_idx| {
+            const current = self.ranges.items[read_idx];
+            var last = &self.ranges.items[write_idx];
+
+            // Check if current overlaps or is adjacent to last
+            if (current.start <= last.stop + 1) {
+                // Merge: extend last range
+                last.stop = @max(last.stop, current.stop);
+            } else {
+                // No overlap: move to next slot
+                write_idx += 1;
+                self.ranges.items[write_idx] = current;
             }
-            break :blk;
         }
-        std.debug.print("Ending with {} records.", .{self.ranges.items.len});
+
+        self.ranges.items.len = write_idx + 1;
+        // std.debug.print("Ending with {} records.\n", .{self.ranges.items.len});
     }
+
     pub fn isFresh(self: Database, id: usize) bool {
         for (self.ranges.items) |r| {
             if (r.contains(id)) return true;
