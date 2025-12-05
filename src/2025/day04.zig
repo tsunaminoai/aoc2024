@@ -18,50 +18,43 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     result = try grid.process();
 
-    // std.debug.print("\n\n{f}\n", .{grid});
+    std.debug.print("\n\n{f}\n", .{grid});
 
     return result;
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator;
-    const result: i64 = 0;
+    var result: i64 = 0;
+    var last = result;
+    var next = result + 1;
 
-    var lines = std.mem.tokenizeScalar(u8, input, '\n');
-    while (lines.next()) |line| {
-        _ = line;
-        // Your solution here
+    var grid = try PaperGrid.init(allocator, input);
+    defer grid.deinit();
+    while (next != 0) {
+        _ = try grid.process();
+        next = grid.getCount(.toBeRemoved, i64);
+        try grid.purge();
+        result += next;
+        last = next;
     }
+    std.debug.print("\n\n{f}\n", .{grid});
 
     return result;
 }
-const Cell = struct {
-    kind: Kind,
-    remove: bool,
-
-    const Kind = enum(u8) {
-        empty = '.',
-        roll = '@',
-    };
+const Cell = enum(u8) {
+    empty = '.',
+    roll = '@',
+    toBeRemoved = 'x',
 
     pub fn init(char: u8) !Cell {
-        return .{
-            .kind = @enumFromInt(char),
-            .remove = false,
-        };
+        return @enumFromInt(char);
     }
 
     pub fn format(
         self: @This(),
         writer: *std.Io.Writer,
     ) std.Io.Writer.Error!void {
-        switch (self.kind) {
-            .empty => try writer.writeAll("."),
-            .roll => if (self.remove)
-                try writer.writeAll("x")
-            else
-                try writer.writeAll("@"),
-        }
+        try writer.writeAll(&.{@intFromEnum(self)});
         try writer.flush();
     }
 };
@@ -71,14 +64,6 @@ const PaperGrid = struct {
 
     cells: Array(Cell) = .{},
     alloc: Allocator,
-
-    pub fn remove(self: *PaperGrid, y: usize, x: usize) void {
-        self.cells.items[self.idx(y, x)].remove = true;
-    }
-
-    fn idx(self: PaperGrid, y: usize, x: usize) usize {
-        return (y * self.width) + x;
-    }
 
     pub fn init(alloc: Allocator, str: []const u8) !PaperGrid {
         return .{
@@ -100,17 +85,31 @@ const PaperGrid = struct {
     pub fn deinit(self: *PaperGrid) void {
         self.cells.deinit(self.alloc);
     }
+    pub fn remove(self: *PaperGrid, y: usize, x: usize) void {
+        self.cells.items[self.idx(y, x)] = .toBeRemoved;
+    }
+
+    fn idx(self: PaperGrid, y: usize, x: usize) usize {
+        return (y * self.width) + x;
+    }
+    pub fn getCount(self: PaperGrid, kind: Cell, comptime T: type) T {
+        return @as(T, @intCast(std.mem.count(Cell, self.cells.items, &.{kind})));
+    }
     pub fn process(self: *PaperGrid) !i64 {
-        var ret: i64 = 0;
         for (0..self.height) |y| {
             for (0..self.width) |x| {
                 if (self.canRollBeMoved(y, x)) {
                     self.remove(y, x);
-                    ret += 1;
                 }
             }
         }
-        return ret;
+        return self.getCount(.toBeRemoved, i64);
+    }
+
+    fn purge(self: *PaperGrid) !void {
+        for (self.cells.items) |*c| {
+            if (c.* == .toBeRemoved) c.* = .empty;
+        }
     }
 
     fn neighbors(self: PaperGrid, y: usize, x: usize) [8]?usize {
@@ -138,14 +137,14 @@ const PaperGrid = struct {
     pub fn canRollBeMoved(self: PaperGrid, y: usize, x: usize) bool {
         if (self.idx(y, x) >= self.cells.items.len) return false;
         // std.debug.print("{c}", .{self.rolls.items[idx]});
-        if (self.cells.items[self.idx(y, x)].kind != .roll) return false;
+        if (self.cells.items[self.idx(y, x)] == .empty) return false;
         const n = self.neighbors(y, x);
         var count: usize = 0;
         for (n) |cidx| {
             if (cidx) |r| {
                 if (r >= self.cells.items.len) continue;
                 const cell = self.cells.items[r];
-                if (cell.kind == .roll) {
+                if (cell != .empty) {
                     count += 1;
                 }
             }
@@ -229,8 +228,7 @@ test "part 1" {
 
 test "part 2" {
     const example = test_input;
-    _ = example; // autofix
 
-    // const result = try part2(std.testing.allocator, example);
-    // try std.testing.expectEqual(@as(i64, 0), result);
+    const result = try part2(std.testing.allocator, example);
+    try std.testing.expectEqual(@as(i64, 43), result);
 }
