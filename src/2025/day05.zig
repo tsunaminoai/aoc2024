@@ -34,14 +34,21 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
+    var ret: i64 = 0;
     var sections = std.mem.splitSequence(u8, input, "\n\n");
     const db_section = sections.next() orelse return error.InvalidInput;
     var db = Database.init(allocator);
     defer db.deinit();
 
     try db.readDBFromString(db_section);
+    try db.optimize();
 
-    return db.ids.count();
+    for (db.ranges.items) |r| {
+        // std.debug.print("{any}\n", .{r});
+        ret += r.num(i64);
+    }
+
+    return ret;
 }
 
 const Range = struct {
@@ -51,32 +58,30 @@ const Range = struct {
     pub fn contains(self: Range, value: usize) bool {
         return self.start <= value and value <= self.stop;
     }
-    pub fn validIds(self: Range, alloc: Allocator) ![]usize {
-        var ret = Array(usize){};
-        defer ret.deinit(alloc);
-
+    pub fn validIds(self: Range, db: *Database) !void {
         for (self.start..self.stop + 1) |id| {
-            try ret.append(alloc, id);
+            try db.ids.put(id, id);
         }
-
-        return try ret.toOwnedSlice(alloc);
+    }
+    pub fn num(self: Range, comptime T: type) T {
+        return @as(T, @intCast(self.stop - self.start + 1));
+    }
+    pub fn isLessThan(_: @TypeOf(.{}), self: Range, other: Range) bool {
+        return self.start < other.start;
     }
 };
 const Database = struct {
     ranges: Array(Range) = .{},
     alloc: Allocator,
-    ids: std.AutoHashMap(usize, usize),
 
     pub fn init(alloc: Allocator) Database {
         return .{
             .ranges = .{},
             .alloc = alloc,
-            .ids = std.AutoHashMap(usize, usize).init(alloc),
         };
     }
     pub fn deinit(self: *Database) void {
         self.ranges.deinit(self.alloc);
-        self.ids.deinit();
     }
     pub fn readDBFromString(self: *Database, str: []const u8) !void {
         var lines = std.mem.tokenizeScalar(u8, str, '\n');
@@ -90,14 +95,28 @@ const Database = struct {
 
     pub fn addRange(self: *Database, start: usize, stop: usize) !void {
         const newRange = Range{ .start = start, .stop = stop };
-        const newIds = try newRange.validIds(self.alloc);
-        defer self.alloc.free(newIds);
-
-        for (newIds) |id| {
-            try self.ids.put(id, id);
-        }
-
         try self.ranges.append(self.alloc, newRange);
+    }
+    pub fn optimize(self: *Database) !void {
+        std.debug.print("Starting with {} records.", .{self.ranges.items.len});
+        blk: while (true) {
+            var idx: usize = 0;
+            std.mem.sort(Range, self.ranges.items, .{}, Range.isLessThan);
+            while (idx < self.ranges.items.len) : (idx += 1) {
+                const t = self.ranges.items[idx];
+                for (idx + 1..self.ranges.items.len) |rdx| {
+                    const r = self.ranges.items[rdx];
+                    if (r.contains(t.start) or r.contains(t.stop)) {
+                        self.ranges.items[rdx].start = if (t.start < r.start) t.start else r.start;
+                        self.ranges.items[rdx].stop = if (t.stop > r.stop) t.stop else r.stop;
+                        _ = self.ranges.orderedRemove(idx);
+                        continue :blk;
+                    }
+                }
+            }
+            break :blk;
+        }
+        std.debug.print("Ending with {} records.", .{self.ranges.items.len});
     }
     pub fn isFresh(self: Database, id: usize) bool {
         for (self.ranges.items) |r| {
@@ -121,12 +140,6 @@ const test_input =
     \\17
     \\32
 ;
-
-test "range" {
-    const ret = try (Range{ .start = 3, .stop = 5 }).validIds(tst.allocator);
-    defer tst.allocator.free(ret);
-    try tst.expectEqual(3, ret.len);
-}
 
 test "part 1" {
     const example = test_input;
