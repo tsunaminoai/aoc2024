@@ -18,7 +18,7 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     result = try grid.process();
 
-    std.debug.print("\n\n{f}\n", .{grid});
+    // std.debug.print("\n\n{f}\n", .{grid});
 
     return result;
 }
@@ -37,7 +37,7 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
         result += next;
         last = next;
     }
-    std.debug.print("\n\n{f}\n", .{grid});
+    // std.debug.print("\n\n{f}\n", .{grid});
 
     return result;
 }
