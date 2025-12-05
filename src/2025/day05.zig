@@ -14,13 +14,20 @@ pub const DayNumber = 5;
 /// The ranges can also overlap; an ingredient ID is fresh if it is in any range.
 /// The Elves are trying to determine which of the available ingredient IDs are fresh.
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator; // autofix
-    const result: i64 = 0;
+    var result: i64 = 0;
 
-    var lines = std.mem.tokenizeScalar(u8, input, '\n');
-    while (lines.next()) |line| {
-        _ = line; // autofix
-        // Your solution here
+    var sections = std.mem.splitSequence(u8, input, "\n\n");
+    const db_section = sections.next() orelse return error.InvalidInput;
+    const ids = sections.next() orelse return error.InvalidInput;
+    var db = Database.init(allocator);
+    defer db.deinit();
+
+    try db.readDBFromString(db_section);
+
+    var iter = std.mem.tokenizeScalar(u8, ids, '\n');
+    while (iter.next()) |id| {
+        const id_i = try std.fmt.parseInt(usize, id, 10);
+        if (db.isFresh(id_i)) result += 1;
     }
 
     return result;
@@ -38,6 +45,48 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     return result;
 }
+
+const Range = struct {
+    start: usize,
+    stop: usize,
+
+    pub fn contains(self: Range, value: usize) bool {
+        return self.start <= value and value <= self.stop;
+    }
+};
+const Database = struct {
+    ranges: Array(Range) = .{},
+    alloc: Allocator,
+
+    pub fn init(alloc: Allocator) Database {
+        return .{
+            .ranges = .{},
+            .alloc = alloc,
+        };
+    }
+    pub fn deinit(self: *Database) void {
+        self.ranges.deinit(self.alloc);
+    }
+    pub fn readDBFromString(self: *Database, str: []const u8) !void {
+        var lines = std.mem.tokenizeScalar(u8, str, '\n');
+        while (lines.next()) |line| {
+            var split = std.mem.splitScalar(u8, line, '-');
+            const start = try std.fmt.parseInt(usize, split.next() orelse return error.InvalidRange, 10);
+            const stop = try std.fmt.parseInt(usize, split.next() orelse return error.InvalidRange, 10);
+            try self.addRange(start, stop);
+        }
+    }
+
+    pub fn addRange(self: *Database, start: usize, stop: usize) !void {
+        try self.ranges.append(self.alloc, .{ .start = start, .stop = stop });
+    }
+    pub fn isFresh(self: Database, id: usize) bool {
+        for (self.ranges.items) |r| {
+            if (r.contains(id)) return true;
+        }
+        return false;
+    }
+};
 /// The database operates on ingredient IDs. It consists of a list of fresh ingredient ID ranges,
 /// a blank line, and a list of available ingredient IDs. For example:
 const test_input =
