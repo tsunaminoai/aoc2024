@@ -23,15 +23,38 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     return result;
 }
-
+/// The joltage output for the bank is still the number formed by the digits of the batteries
+/// you've turned on; the only difference is that now there will be 12 digits in
+/// each bank's joltage output instead of two.
+///
+/// Consider again the example from before:
+///
+/// 987654321111111
+/// 811111111111119
+/// 234234234234278
+/// 818181911112111
+///
+/// Now, the joltages are much larger:
+///
+///     In 987654321111111, the largest joltage can be found by turning on everything except some 1s at the end to produce 987654321111.
+///     In the digit sequence 811111111111119, the largest joltage can be found by turning on everything except some 1s, producing 811111111119.
+///     In 234234234234278, the largest joltage can be found by turning on everything except a 2 battery, a 3 battery, and another 2 battery near the start to produce 434234234278.
+///     In 818181911112111, the joltage 888911112111 is produced by turning on everything except some 1s near the front.
+///
+/// The total output joltage is now much larger: 987654321111 + 811111111119 + 434234234278 + 888911112111
+/// = 3121910778619.
+///
+/// What is the new total output joltage?
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator;
-    const result: i64 = 0;
+    var result: i64 = 0;
 
     var lines = std.mem.tokenizeScalar(u8, input, '\n');
     while (lines.next()) |line| {
-        _ = line;
-        // Your solution here
+        var b = try Bank.init(allocator, line);
+        defer b.deinit();
+        for (0..12) |_|
+            result += try b.getMaxJoltage();
+        // std.debug.print("{any}\n", .{b});
     }
 
     return result;
@@ -76,6 +99,14 @@ const Bank = struct {
             if (b.enabled) try ret.append(self.alloc, @intCast(b.joltage + '0'));
         }
         return try std.fmt.parseInt(i64, ret.items, 10);
+    }
+
+    pub fn first(self: Bank, ltr: bool) ?usize {
+        for (0..self.batteries.items.len) |i| {
+            const idx = if (ltr) i else self.batteries.items.len - i;
+            if (self.batteries.items[i].enabled) return idx;
+        }
+        return null;
     }
 
     /// Finds the largest possible joltage for the bank
@@ -155,5 +186,5 @@ test "part 2" {
     const example = test_input;
 
     const result = try part2(std.testing.allocator, example);
-    try std.testing.expectEqual(@as(i64, 0), result);
+    try std.testing.expectEqual(@as(i64, 3121910778619), result);
 }
