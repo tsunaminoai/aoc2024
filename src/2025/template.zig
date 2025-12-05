@@ -11,12 +11,12 @@ pub const data = @embedFile("data/day01.txt");
 pub const DayNumber = 1;
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator;
+    _ = allocator; // autofix
     const result: i64 = 0;
 
     var lines = std.mem.tokenizeScalar(u8, input, '\n');
     while (lines.next()) |line| {
-        _ = line;
+        _ = line; // autofix
         // Your solution here
     }
 
@@ -24,12 +24,12 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator;
+    _ = allocator; // autofix
     const result: i64 = 0;
 
     var lines = std.mem.tokenizeScalar(u8, input, '\n');
     while (lines.next()) |line| {
-        _ = line;
+        _ = line; // autofix
         // Your solution here
     }
 
