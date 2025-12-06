@@ -42,16 +42,10 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
     return result;
 }
 
-const test_input =
-    \\123 328  51 64 
-    \\ 45 64  387 23 
-    \\  6 98  215 314
-    \\*   +   *   +  
-;
-
 const SquidMath = struct {
     operands: Array(Array(i64)),
     operators: Array(u8),
+    sigfigs: Array(u8),
     results: Array(i64),
     alloc: Allocator,
 
@@ -60,6 +54,7 @@ const SquidMath = struct {
             .operands = .{},
             .operators = .{},
             .results = .{},
+            .sigfigs = .{},
             .alloc = alloc,
         };
     }
@@ -68,24 +63,45 @@ const SquidMath = struct {
         var lines = std.mem.tokenizeScalar(u8, input, '\n');
         var opers = Array(i64){};
         defer opers.deinit(self.alloc);
+        // var columns: usize = 0;
         while (lines.next()) |line| {
             var ops = std.mem.splitAny(u8, line, "\t ");
             while (ops.next()) |token| {
-                if (token.len == 0) continue;
-                // Your solution here
-                if (std.ascii.isDigit(token[0])) {
-                    const value = try std.fmt.parseInt(i64, token, 10);
-                    try opers.append(self.alloc, value);
-                } else {
-                    try self.operators.append(self.alloc, token[0]);
+                if (token.len != 0) {
+                    // Your solution here
+                    if (std.ascii.isDigit(token[0])) {
+                        const value = try std.fmt.parseInt(i64, token, 10);
+                        try opers.append(self.alloc, value);
+                    }
                 }
-                // std.debug.print("{s}|", .{token});
             }
-            if (opers.items.len > 0) {
-                try self.operands.append(self.alloc, try opers.clone(self.alloc));
-                opers.clearAndFree(self.alloc);
+
+            try self.operands.append(self.alloc, try opers.clone(self.alloc));
+            opers.clearAndFree(self.alloc);
+            if (lines.peek()) |p| {
+                if (std.mem.indexOfAny(u8, p, "+*") != null) break;
             }
         }
+        //operators line
+        const ops = lines.next() orelse return error.InvalidInput;
+        // const columns = self.operands.items[0].items.len;
+        var index: usize = 0;
+
+        while (index < ops.len - 1) : (index += 1) {
+            if (index >= ops.len) break;
+            const op = ops[index];
+            try self.operators.append(self.alloc, op);
+            const sigs = consume(ops, index + 1);
+            try self.sigfigs.append(self.alloc, @as(u8, @intCast(sigs)));
+            index += sigs;
+        }
+    }
+    fn consume(str: []const u8, index: usize) usize {
+        var ret: usize = 0;
+        while (index + ret < str.len and std.ascii.isWhitespace(str[index + ret])) {
+            ret += 1;
+        }
+        return ret;
     }
 
     pub fn deinit(self: *SquidMath) void {
@@ -95,6 +111,7 @@ const SquidMath = struct {
         self.operands.deinit(self.alloc);
         self.operators.deinit(self.alloc);
         self.results.deinit(self.alloc);
+        self.sigfigs.deinit(self.alloc);
     }
 
     pub fn format(
@@ -108,6 +125,13 @@ const SquidMath = struct {
             }
             try writer.print("\n", .{});
         }
+        try writer.print("Operators: ", .{});
+        for (self.operators.items) |op|
+            try writer.print("{c} ", .{op});
+
+        try writer.print("\nSigfigs: ", .{});
+        for (self.sigfigs.items) |s|
+            try writer.print("{} ", .{s});
     }
 
     pub fn eval(self: *SquidMath) !void {
@@ -126,6 +150,22 @@ const SquidMath = struct {
         }
     }
 };
+
+const test_input =
+    \\123 328  51 64 
+    \\ 45 64  387 23 
+    \\  6 98  215 314
+    \\*   +   *   +  
+;
+
+test "squidmath" {
+    var sm = SquidMath.init(tst.allocator);
+    defer sm.deinit();
+
+    try sm.readInput(test_input);
+    std.debug.print("{f}\n", .{sm});
+    try sm.eval();
+}
 
 test "part 1" {
     const example = test_input;
