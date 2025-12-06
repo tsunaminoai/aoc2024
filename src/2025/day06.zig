@@ -30,13 +30,16 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator; // autofix
-    const result: i64 = 0;
+    var result: i64 = 0;
+    var sm = SquidMath.init(allocator);
+    defer sm.deinit();
 
-    var lines = std.mem.tokenizeScalar(u8, input, '\n');
-    while (lines.next()) |line| {
-        _ = line; // autofix
-        // Your solution here
+    try sm.readInput(input);
+    // std.debug.print("{f}\n", .{sm});
+    try sm.squidIt();
+    for (sm.results.items) |res| {
+        // std.debug.print("Result: {d}\n", .{res});
+        result += res;
     }
 
     return result;
@@ -45,7 +48,6 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
 const SquidMath = struct {
     operands: Array(Array(i64)),
     operators: Array(u8),
-    sigfigs: Array(u8),
     results: Array(i64),
     alloc: Allocator,
 
@@ -54,48 +56,44 @@ const SquidMath = struct {
             .operands = .{},
             .operators = .{},
             .results = .{},
-            .sigfigs = .{},
             .alloc = alloc,
         };
     }
 
     pub fn readInput(self: *SquidMath, input: []const u8) !void {
         var lines = std.mem.tokenizeScalar(u8, input, '\n');
+
         var opers = Array(i64){};
+
         defer opers.deinit(self.alloc);
-        // var columns: usize = 0;
+
         while (lines.next()) |line| {
             var ops = std.mem.splitAny(u8, line, "\t ");
+
             while (ops.next()) |token| {
-                if (token.len != 0) {
-                    // Your solution here
-                    if (std.ascii.isDigit(token[0])) {
-                        const value = try std.fmt.parseInt(i64, token, 10);
-                        try opers.append(self.alloc, value);
-                    }
+                if (token.len == 0) continue;
+
+                // Your solution here
+
+                if (std.ascii.isDigit(token[0])) {
+                    const value = try std.fmt.parseInt(i64, token, 10);
+
+                    try opers.append(self.alloc, value);
+                } else {
+                    try self.operators.append(self.alloc, token[0]);
                 }
+
+                // std.debug.print("{s}|", .{token});
             }
 
-            try self.operands.append(self.alloc, try opers.clone(self.alloc));
-            opers.clearAndFree(self.alloc);
-            if (lines.peek()) |p| {
-                if (std.mem.indexOfAny(u8, p, "+*") != null) break;
-            }
-        }
-        //operators line
-        const ops = lines.next() orelse return error.InvalidInput;
-        // const columns = self.operands.items[0].items.len;
-        var index: usize = 0;
+            if (opers.items.len > 0) {
+                try self.operands.append(self.alloc, try opers.clone(self.alloc));
 
-        while (index < ops.len - 1) : (index += 1) {
-            if (index >= ops.len) break;
-            const op = ops[index];
-            try self.operators.append(self.alloc, op);
-            const sigs = consume(ops, index + 1);
-            try self.sigfigs.append(self.alloc, @as(u8, @intCast(sigs)));
-            index += sigs;
+                opers.clearAndFree(self.alloc);
+            }
         }
     }
+
     fn consume(str: []const u8, index: usize) usize {
         var ret: usize = 0;
         while (index + ret < str.len and std.ascii.isWhitespace(str[index + ret])) {
@@ -111,7 +109,6 @@ const SquidMath = struct {
         self.operands.deinit(self.alloc);
         self.operators.deinit(self.alloc);
         self.results.deinit(self.alloc);
-        self.sigfigs.deinit(self.alloc);
     }
 
     pub fn format(
@@ -128,10 +125,6 @@ const SquidMath = struct {
         try writer.print("Operators: ", .{});
         for (self.operators.items) |op|
             try writer.print("{c} ", .{op});
-
-        try writer.print("\nSigfigs: ", .{});
-        for (self.sigfigs.items) |s|
-            try writer.print("{} ", .{s});
     }
 
     pub fn eval(self: *SquidMath) !void {
@@ -149,6 +142,79 @@ const SquidMath = struct {
             try self.results.append(self.alloc, ret);
         }
     }
+
+    pub fn squidIt(self: *SquidMath) !void {
+        for (self.operators.items, 0..) |op, i| {
+            var actual = try self.transformColumn(i);
+            std.debug.print("Transformed: {any}\n", .{actual.items});
+            defer actual.deinit(self.alloc);
+            var ret: i64 = if (op == '+') 0 else 1;
+            for (actual.items) |val| {
+                switch (op) {
+                    '+' => ret += val,
+                    '*' => ret *= val,
+                    else => {},
+                }
+            }
+            try self.results.append(self.alloc, ret);
+        }
+    }
+
+    // right to left
+    // top to bottom
+    fn transformColumn(
+        self: SquidMath,
+        col: usize,
+    ) !Array(i64) {
+        if (col >= self.operands.items[0].items.len) return error.InvalidColumn;
+        var orig = Array(i64){};
+        defer orig.deinit(self.alloc);
+        var sf: usize = 0;
+        for (self.operands.items) |line| {
+            try orig.append(self.alloc, line.items[col]);
+            const s = countDigits(orig.getLast());
+            sf = @max(s, sf);
+        }
+        var ret = Array(i64){};
+        try ret.appendNTimes(self.alloc, 0, self.operands.items.len);
+        std.debug.print("Working on: {any} ({})\n", .{ orig.items, sf });
+
+        for (0..sf) |digit_pos| {
+            for (orig.items) |operand| {
+                const d = get_digit(operand, digit_pos);
+                ret.items[digit_pos] *= 10;
+                ret.items[digit_pos] += d;
+            }
+            // Remove trailing zeros from the built number
+            while (ret.items[digit_pos] > 0 and @mod(ret.items[digit_pos], 10) == 0) {
+                ret.items[digit_pos] = @divFloor(ret.items[digit_pos], 10);
+            }
+        }
+
+        return ret;
+    }
+
+    fn get_digit(number: anytype, pos: usize) @TypeOf(number) {
+
+        // Calculate power of 10 for the position
+        var divisor: @TypeOf(number) = 1;
+        for (0..pos) |_|
+            divisor *= 10;
+
+        // Extract the digit
+        return @mod(@divFloor(number, divisor), 10);
+    }
+
+    fn countDigits(number: i64) usize {
+        if (number == 0) return 1;
+        var n = @abs(number);
+        var count: usize = 0;
+        while (n > 0) {
+            count += 1;
+            n = @divFloor(n, 10);
+        }
+        return count;
+    }
 };
 
 const test_input =
@@ -157,6 +223,7 @@ const test_input =
     \\  6 98  215 314
     \\*   +   *   +  
 ;
+// [0] = 356 * 24 * 1
 
 test "squidmath" {
     var sm = SquidMath.init(tst.allocator);
@@ -178,5 +245,5 @@ test "part 2" {
     const example = test_input;
 
     const result = try part2(std.testing.allocator, example);
-    try std.testing.expectEqual(@as(i64, 0), result);
+    try std.testing.expectEqual(@as(i64, 3263827), result);
 }
