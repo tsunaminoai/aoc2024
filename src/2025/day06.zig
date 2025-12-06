@@ -19,7 +19,7 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     defer sm.deinit();
 
     try sm.readInput(input);
-    std.debug.print("{f}\n", .{sm});
+    // std.debug.print("{f}\n", .{sm});
     try sm.eval();
     for (sm.results.items) |res| {
         // std.debug.print("Result: {d}\n", .{res});
@@ -79,7 +79,7 @@ const SquidMath = struct {
                 } else {
                     try self.operators.append(self.alloc, token[0]);
                 }
-                std.debug.print("{s}|", .{token});
+                // std.debug.print("{s}|", .{token});
             }
             if (opers.items.len > 0) {
                 try self.operands.append(self.alloc, try opers.clone(self.alloc));
