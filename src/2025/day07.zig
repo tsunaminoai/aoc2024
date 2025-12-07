@@ -11,16 +11,12 @@ pub const data = @embedFile("data/day07.txt");
 pub const DayNumber = 7;
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator; // autofix
-    const result: i64 = 0;
+    var t = try Tachyons.init(allocator, input);
+    defer t.deinit();
 
-    var lines = std.mem.tokenizeScalar(u8, input, '\n');
-    while (lines.next()) |line| {
-        _ = line; // autofix
-        // Your solution here
-    }
+    try t.fire();
 
-    return result;
+    return @intCast(t.splits);
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
@@ -35,6 +31,88 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     return result;
 }
+
+const Coord = struct {
+    x: usize,
+    y: usize,
+};
+const Cell = enum(u8) {
+    empty = '.',
+    source = 'S',
+    splitter = '^',
+    beam = '|',
+};
+pub const Tachyons = struct {
+    width: usize = 0,
+    height: usize = 0,
+    cells: Array(Cell) = .{},
+    alloc: Allocator,
+    beams: usize = 0,
+    splits: usize = 0,
+
+    pub fn init(allocator: Allocator, str: []const u8) !Tachyons {
+        var t = Tachyons{ .alloc = allocator };
+        t.width = (std.mem.indexOfScalar(u8, str, '\n') orelse return error.InvalidInput);
+        t.height = std.mem.count(u8, str, "\n") + 1;
+        var iter = std.mem.splitScalar(u8, str, '\n');
+        while (iter.next()) |line| {
+            try t.cells.appendSlice(allocator, @ptrCast(line));
+        }
+        return t;
+    }
+    pub fn deinit(self: *Tachyons) void {
+        self.cells.deinit(self.alloc);
+    }
+    fn toIdx(self: Tachyons, x: usize, y: usize) usize {
+        std.debug.assert(y * self.width + x < self.width * self.height);
+        return y * self.width + x;
+    }
+    fn toCoord(self: Tachyons, idx: usize) Coord {
+        std.debug.assert(idx < self.cells.items.len);
+        return .{
+            .x = @mod(idx, self.width),
+            .y = @divFloor(idx, self.width),
+        };
+    }
+    pub fn fire(self: *Tachyons) !void {
+        const source = self.toCoord(std.mem.indexOfScalar(Cell, self.cells.items, .source) orelse return error.NoSourceFound);
+        std.debug.print("{any}\n", .{source});
+        try self.placeBeam(.{ .x = source.x, .y = source.y + 1 });
+        std.debug.print("{f}\n", .{self});
+    }
+    fn placeBeam(self: *Tachyons, start_coord: Coord) !void {
+        for (start_coord.y..self.height) |y| {
+            const cell = &self.cells.items[self.toIdx(start_coord.x, y)];
+            const above = &self.cells.items[self.toIdx(start_coord.x, y - 1)];
+            switch (cell.*) {
+                .empty => {
+                    cell.* = .beam;
+
+                    if (above.* != .beam) self.beams += 1;
+                },
+                .beam => {
+                    return;
+                },
+                .splitter => {
+                    try self.placeBeam(.{ .x = start_coord.x - 1, .y = y });
+                    try self.placeBeam(.{ .x = start_coord.x + 1, .y = y });
+                    self.splits += 1;
+                    return;
+                },
+                .source => return error.CantHitSource,
+            }
+        }
+    }
+    pub fn format(
+        self: @This(),
+        writer: *std.Io.Writer,
+    ) std.Io.Writer.Error!void {
+        for (self.cells.items, 0..) |cell, i| {
+            if (i != 0 and @mod(i, self.width) == 0) try writer.writeAll("\n");
+            try writer.print("{c}", .{@intFromEnum(cell)});
+        }
+    }
+};
 
 const test_input =
     \\.......S.......
