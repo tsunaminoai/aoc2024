@@ -77,12 +77,9 @@ pub const Tachyons = struct {
     fn placeBeam(self: *Tachyons, start_coord: Coord) !void {
         for (start_coord.y..self.height) |y| {
             const cell = &self.cells.items[self.toIdx(start_coord.x, y)];
-            const above = &self.cells.items[self.toIdx(start_coord.x, y - 1)];
             switch (cell.*) {
                 .empty => {
                     cell.* = .beam;
-
-                    if (above.* != .beam) self.beams += 1;
                 },
                 .beam => {
                     return;
