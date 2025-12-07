@@ -20,16 +20,12 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator; // autofix
-    const result: i64 = 0;
+    var t = try Tachyons.init(allocator, input);
+    defer t.deinit();
 
-    var lines = std.mem.tokenizeScalar(u8, input, '\n');
-    while (lines.next()) |line| {
-        _ = line; // autofix
-        // Your solution here
-    }
+    try t.fire();
 
-    return result;
+    return @intCast(t.paths());
 }
 
 const Coord = struct {
@@ -76,9 +72,7 @@ pub const Tachyons = struct {
     }
     pub fn fire(self: *Tachyons) !void {
         const source = self.toCoord(std.mem.indexOfScalar(Cell, self.cells.items, .source) orelse return error.NoSourceFound);
-        std.debug.print("{any}\n", .{source});
         try self.placeBeam(.{ .x = source.x, .y = source.y + 1 });
-        std.debug.print("{f}\n", .{self});
     }
     fn placeBeam(self: *Tachyons, start_coord: Coord) !void {
         for (start_coord.y..self.height) |y| {
@@ -102,6 +96,19 @@ pub const Tachyons = struct {
                 .source => return error.CantHitSource,
             }
         }
+    }
+    pub fn paths(self: Tachyons) usize {
+        var ret: usize = 0;
+        var last: usize = 0;
+        for (0..self.height) |y| {
+            const slice = self.cells.items[self.toIdx(0, y)..self.toIdx(self.width - 1, y)];
+            const cnt = std.mem.count(Cell, slice, &.{.beam});
+            if (cnt != last) {
+                ret += cnt;
+                last = cnt;
+            }
+        }
+        return ret;
     }
     pub fn format(
         self: @This(),
@@ -144,5 +151,5 @@ test "part 2" {
     const example = test_input;
 
     const result = try part2(std.testing.allocator, example);
-    try std.testing.expectEqual(@as(i64, 0), result);
+    try std.testing.expectEqual(@as(i64, 40), result);
 }
