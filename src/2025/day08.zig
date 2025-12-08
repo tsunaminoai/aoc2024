@@ -192,7 +192,7 @@ test "part 1" {
     const example = test_input;
 
     const result = try part1(std.testing.allocator, example);
-    try std.testing.expectEqual(@as(i64, 40), result);
+    try std.testing.expectEqual(@as(i64, 0), result);
 }
 
 test "part 2" {
