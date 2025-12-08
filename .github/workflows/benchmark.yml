@@ -1,0 +1,63 @@
+name: Benchmark
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install devbox
+        uses: jetify-com/devbox-install-action@v0.10.0
+
+      - name: Run benchmarks
+        id: bench
+        run: |
+          output=$(devbox run -- zig build bench 2>&1)
+          # Store the output in a multi-line variable
+          echo "results<<EOF" >> $GITHUB_OUTPUT
+          echo "$output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Update README with benchmark results
+        id: update
+        run: |
+          # Create a temporary file with the updated README
+          {
+            # Read the file until we hit the benchmark section
+            sed '/<!-- BENCHMARK START -->/q' README.md
+            echo ""
+            echo '```'
+            echo "${{ steps.bench.outputs.results }}"
+            echo '```'
+            echo ""
+            # Read from after BENCHMARK START marker to BENCHMARK END marker
+            sed -n '/<!-- BENCHMARK END -->/,$p' README.md
+          } > README.md.tmp
+          
+          mv README.md.tmp README.md
+          
+          # Check if there were changes
+          if git diff --quiet README.md; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push benchmark results
+        if: steps.update.outputs.changes == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add README.md
+          git commit -m "Update benchmark results"
+          git push
+

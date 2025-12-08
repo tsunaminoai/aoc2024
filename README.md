@@ -80,3 +80,9 @@ zig build --watch test
 
 
 <!-- gen-readme end -->
+
+## Benchmark Results
+
+<!-- BENCHMARK START -->
+(benchmarks will be updated here)
+<!-- BENCHMARK END -->
