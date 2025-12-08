@@ -32,7 +32,7 @@ jobs:
           fi
 
       - name: Commit and push benchmark results
-        if: steps.update.outputs.changes == 'true'
+        if: steps.bench.outputs.changes == 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
