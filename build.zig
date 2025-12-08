@@ -37,8 +37,12 @@ pub fn build(b: *std.Build) void {
     const all_bench_step = b.step("bench", "Bench run all available days");
     const all_tests_step = b.step("test", "Run all tests");
 
+    var bench_cmds = std.ArrayList(*std.Build.Step.Run){};
+    defer bench_cmds.deinit(b.allocator);
+
     // Track if we built anything
     var built_any = false;
+    const bench_results = b.addWriteFiles();
 
     // Generate targets for each day
     for (1..26) |day| {
@@ -101,6 +105,10 @@ pub fn build(b: *std.Build) void {
         const bench_cmd = b.addRunArtifact(exe);
         bench_cmd.step.dependOn(&install.step);
         bench_cmd.addArg("--bench");
+        _ = bench_results.addCopyFile(
+            bench_cmd.captureStdOut(),
+            b.fmt("{s}-benchmark.txt", .{day_str}),
+        );
 
         const bench_step = b.step(
             b.fmt("{s}_bench", .{day_str}),
@@ -135,6 +143,29 @@ pub fn build(b: *std.Build) void {
     if (!built_any) {
         std.debug.print("No solution files found in src/{s}/\n", .{year_option});
     }
+    const readme_md = b.path("README.md");
+    _ = bench_results.addCopyFile(readme_md, "README.tmp");
+    const agg_bench = b.addSystemCommand(&.{
+        "bash",
+        "-c",
+        \\set -e
+        \\ # Read the file until we hit the benchmark section
+        \\sed '/<!-- BENCHMARK START -->/q' README.tmp
+        \\echo ""
+        \\ls |grep txt | sort | while read i; do cat $i;done
+        \\echo ""
+        \\# Read from after BENCHMARK START marker to BENCHMARK END marker
+        \\sed -n '/<!-- BENCHMARK END -->/,$p' README.tmp
+        ,
+    });
+    const README_md = agg_bench.captureStdOut();
+    agg_bench.setCwd(bench_results.getDirectory());
+    agg_bench.step.dependOn(all_bench_step);
+    const readme_step = b.step("readme", "Update readme with benchmark results");
+    const readme = b.addInstallFile(README_md, "README.md");
+
+    readme_step.dependOn(&readme.step);
+    readme_step.dependOn(&agg_bench.step);
 }
 
 /// Check if a file exists at build time

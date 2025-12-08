@@ -1,0 +1,12 @@
+{
+  "workbench.colorTheme": "Stylix",
+  "zig.zls.path": "zls",
+"editor.codeActionsOnSave": { "source.fixAll": "explicit" },
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "zig": false
+  }
+}

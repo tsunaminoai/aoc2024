@@ -1,14 +1,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.6/.schema/devbox.schema.json",
-  "packages": ["zig@0.15.1", "zls@0.15.0", "watchexec@latest"],
+  "packages": [
+    "zls@0.15.0",
+    "watchexec@latest",
+    "act@latest",
+    "zig@0.15.2"
+  ],
   "shell": {
     "init_hook": ["echo 'Welcome to devbox!' > /dev/null"],
     "scripts": {
-      "fast": ["zig build -Doptimize=ReleaseFast run"],
-      "safe": ["zig build -Doptimize=ReleaseSafe run"],
-      "small": ["zig build -Doptimize=ReleaseSmall run"],
-      "debug": ["zig build -Doptimize=Debug run"],
-      "test": ["zig build -Doptimize=Debug test"],
+      "fast":       ["zig build -Doptimize=ReleaseFast run"],
+      "safe":       ["zig build -Doptimize=ReleaseSafe run"],
+      "small":      ["zig build -Doptimize=ReleaseSmall run"],
+      "debug":      ["zig build -Doptimize=Debug run"],
+      "test":       ["zig build -Doptimize=Debug test"],
       "test-watch": ["zig build --watch test"]
     }
   }
