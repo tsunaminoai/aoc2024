@@ -18,32 +18,11 @@ jobs:
       - name: Install devbox
         uses: jetify-com/devbox-install-action@v0.10.0
 
-      - name: Run benchmarks
+      - name: Run benchmarks and build updated readme
         id: bench
         run: |
-          output=$(devbox run -- zig build bench 2>&1)
-          # Store the output in a multi-line variable
-          echo "results<<EOF" >> $GITHUB_OUTPUT
-          echo "$output" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Update README with benchmark results
-        id: update
-        run: |
-          # Create a temporary file with the updated README
-          {
-            # Read the file until we hit the benchmark section
-            sed '/<!-- BENCHMARK START -->/q' README.md
-            echo ""
-            echo '```'
-            echo "${{ steps.bench.outputs.results }}"
-            echo '```'
-            echo ""
-            # Read from after BENCHMARK START marker to BENCHMARK END marker
-            sed -n '/<!-- BENCHMARK END -->/,$p' README.md
-          } > README.md.tmp
-          
-          mv README.md.tmp README.md
+          devbox run -- zig build readme
+          mv ./zig-out/README.md README.md
           
           # Check if there were changes
           if git diff --quiet README.md; then

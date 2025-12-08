@@ -84,6 +84,8 @@ fn executeDay(
     try stdout.print("  Total:  {s:>15} (", .{""});
     try total_time.format(stdout);
     try stdout.print(")\n", .{});
+
+    try stdout.flush();
 }
 
 fn benchmarkDay(
@@ -95,22 +97,11 @@ fn benchmarkDay(
     const input = day_module.data;
     const iterations: usize = 100;
 
-    try stdout.print("Day {d:>2} Benchmark ({d} iterations):\n", .{ daynum, iterations });
-
     // Benchmark part 1
     const bench1 = try util.benchmark(i64, day_module.part1, .{ allocator, input }, iterations);
     const avg1 = util.formatTime(bench1.avg_ns);
     const min1 = util.formatTime(bench1.min_ns);
     const max1 = util.formatTime(bench1.max_ns);
-
-    try stdout.print("  Part 1: {d:>15}\n", .{bench1.result});
-    try stdout.print("    Avg: ", .{});
-    try avg1.format(stdout);
-    try stdout.print("  Min: ", .{});
-    try min1.format(stdout);
-    try stdout.print("  Max: ", .{});
-    try max1.format(stdout);
-    try stdout.print("\n", .{});
 
     // Benchmark part 2
     const bench2 = try util.benchmark(i64, day_module.part2, .{ allocator, input }, iterations);
@@ -118,12 +109,9 @@ fn benchmarkDay(
     const min2 = util.formatTime(bench2.min_ns);
     const max2 = util.formatTime(bench2.max_ns);
 
-    try stdout.print("  Part 2: {d:>15}\n", .{bench2.result});
-    try stdout.print("    Avg: ", .{});
-    try avg2.format(stdout);
-    try stdout.print("  Min: ", .{});
-    try min2.format(stdout);
-    try stdout.print("  Max: ", .{});
-    try max2.format(stdout);
-    try stdout.print("\n", .{});
+    // try stdout.print("Day {d:>2} Benchmark ({d} iterations):\n", .{ daynum, iterations });
+    try stdout.print("### Day {} ({} iterations)\n\n", .{ daynum, iterations });
+    try stdout.writeAll("|Part|Avg|Min|Max|\n|-|-|-|-|\n");
+    try stdout.print("|{}|{f}|{f}|{f}\n", .{ 1, avg1, min1, max1 });
+    try stdout.print("|{}|{f}|{f}|{f}\n\n", .{ 2, avg2, min2, max2 });
 }
