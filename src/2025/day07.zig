@@ -14,7 +14,7 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var t = try Tachyons.init(allocator, input);
     defer t.deinit();
 
-    try t.fire();
+    _ = try t.fire();
 
     return @intCast(t.splits);
 }
@@ -25,7 +25,7 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     try t.fire();
 
-    return @intCast(t.paths());
+    return @intCast(try t.paths());
 }
 
 const Coord = struct {
@@ -45,9 +45,10 @@ pub const Tachyons = struct {
     alloc: Allocator,
     beams: usize = 0,
     splits: usize = 0,
+    memos: Memos,
 
     pub fn init(allocator: Allocator, str: []const u8) !Tachyons {
-        var t = Tachyons{ .alloc = allocator };
+        var t = Tachyons{ .alloc = allocator, .memos = .init(allocator) };
         t.width = (std.mem.indexOfScalar(u8, str, '\n') orelse return error.InvalidInput);
         t.height = std.mem.count(u8, str, "\n") + 1;
         var iter = std.mem.splitScalar(u8, str, '\n');
@@ -58,6 +59,7 @@ pub const Tachyons = struct {
     }
     pub fn deinit(self: *Tachyons) void {
         self.cells.deinit(self.alloc);
+        self.memos.deinit();
     }
     fn toIdx(self: Tachyons, x: usize, y: usize) usize {
         std.debug.assert(y * self.width + x < self.width * self.height);
@@ -76,7 +78,8 @@ pub const Tachyons = struct {
     }
     fn placeBeam(self: *Tachyons, start_coord: Coord) !void {
         for (start_coord.y..self.height) |y| {
-            const cell = &self.cells.items[self.toIdx(start_coord.x, y)];
+            const idx = self.toIdx(start_coord.x, y);
+            const cell = &self.cells.items[idx];
             switch (cell.*) {
                 .empty => {
                     cell.* = .beam;
@@ -88,25 +91,50 @@ pub const Tachyons = struct {
                     try self.placeBeam(.{ .x = start_coord.x - 1, .y = y });
                     try self.placeBeam(.{ .x = start_coord.x + 1, .y = y });
                     self.splits += 1;
+
                     return;
                 },
                 .source => return error.CantHitSource,
             }
         }
     }
-    pub fn paths(self: Tachyons) usize {
-        var ret: usize = 0;
-        var last: usize = 0;
-        for (0..self.height) |y| {
-            const slice = self.cells.items[self.toIdx(0, y)..self.toIdx(self.width - 1, y)];
-            const cnt = std.mem.count(Cell, slice, &.{.beam});
-            if (cnt != last) {
-                ret += cnt;
-                last = cnt;
-            }
-        }
-        return ret;
+    const Memos = std.AutoHashMap(usize, usize);
+    pub fn paths(self: *Tachyons) !usize {
+        const source = self.toCoord(std.mem.indexOfScalar(Cell, self.cells.items, .source) orelse return error.NoSourceFound);
+
+        return try self.dfs(source);
     }
+    fn dfs(self: *Tachyons, coord: Coord) !usize {
+        const node = self.toIdx(coord.x, coord.y);
+
+        if (self.memos.get(node)) |m| return m;
+
+        const cell = self.cells.items[node];
+
+        // Splitter: sum paths from left and right branches
+        if (cell == .splitter) {
+            var total: usize = 0;
+            if (coord.x > 0) {
+                total += try self.dfs(.{ .x = coord.x - 1, .y = coord.y });
+            }
+            if (coord.x + 1 < self.width) {
+                total += try self.dfs(.{ .x = coord.x + 1, .y = coord.y });
+            }
+            try self.memos.put(node, total);
+            return total;
+        }
+
+        // Source or other: recurse downward
+        if (coord.y + 1 < self.height) {
+            const result = try self.dfs(.{ .x = coord.x, .y = coord.y + 1 });
+            try self.memos.put(node, result);
+            return result;
+        }
+
+        try self.memos.put(node, 1);
+        return 1;
+    }
+
     pub fn format(
         self: @This(),
         writer: *std.Io.Writer,
