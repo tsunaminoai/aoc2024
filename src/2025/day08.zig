@@ -58,17 +58,25 @@ const Position = struct {
     }
 };
 const Connection = struct {
-    from: BoxId,
-    to: BoxId,
-    len: i64 = 0,
+    to: BoxId = math.maxInt(BoxId),
+    from: BoxId = math.maxInt(BoxId),
+    len: i64 = math.maxInt(i64),
+    pub fn swapped(self: Connection) Connection {
+        return .{
+            .to = self.from,
+            .from = self.to,
+            .len = self.len,
+        };
+    }
 };
 const JunctionBox = struct {
     pos: Position = .{},
     id: BoxId = 0,
-    connections: Array(BoxId) = .{},
+    alloc: Allocator,
 
-    pub fn init(x: anytype, y: anytype, z: anytype, id: CurcuitId) JunctionBox {
+    pub fn init(a: Allocator, x: anytype, y: anytype, z: anytype, id: CurcuitId) JunctionBox {
         return .{
+            .alloc = a,
             .pos = .{
                 .x = @intCast(x),
                 .y = @intCast(y),
@@ -89,44 +97,26 @@ const JunctionBox = struct {
 const Playground = struct {
     jboxes: std.AutoArrayHashMap(usize, JunctionBox),
     maxId: usize = 0,
-    circuits: Array(Array(BoxId)),
     alloc: Allocator,
+    connections: std.AutoHashMap(Connection, Connection),
 
     pub fn init(alloc: Allocator) Playground {
         return .{
             .alloc = alloc,
             .jboxes = .init(alloc),
-            .circuits = .{},
+            .connections = .init(alloc),
         };
     }
     pub fn deinit(self: *Playground) void {
-        for (self.circuits.items) |*c| {
-            c.deinit(self.alloc);
-        }
-        self.circuits.deinit(self.alloc);
         self.jboxes.deinit();
+        self.connections.deinit();
     }
 
     pub fn addBox(self: *Playground, x: i64, y: i64, z: i64) !void {
-        const box = JunctionBox.init(x, y, z, self.maxId);
+        const box = JunctionBox.init(self.alloc, x, y, z, self.maxId);
 
         try self.jboxes.put(self.maxId, box);
         self.maxId += 1;
-    }
-
-    fn findClosest(self: Playground, box: anytype) struct { ?BoxId, i64 } {
-        var minDistance: i64 = math.maxInt(i64);
-        var ret: ?BoxId = null;
-        var iter = self.jboxes.iterator();
-        while (iter.next()) |jb| {
-            if (jb.value_ptr.id == box.value_ptr.id) continue; // ignore self
-            const d = box.value_ptr.distance(jb.value_ptr.*);
-            if (d < minDistance) {
-                minDistance = d;
-                ret = jb.value_ptr.id;
-            }
-        }
-        return .{ ret, minDistance };
     }
 
     /// By connecting these two junction boxes together, because electricity can flow between them,
@@ -137,10 +127,27 @@ const Playground = struct {
     ///  are 162,817,812 and 431,825,988. After connecting them, since 162,817,812 is already connected
     ///  to another junction box, there is now a single circuit which contains three junction boxes and
     /// an additional 17 circuits which contain one junction box each.
-    pub fn connect(self: *Playground) !void {
+    pub fn connectBoxes(self: *Playground) !void {
         var iter = self.jboxes.iterator();
         while (iter.next()) |ent| {
-            std.debug.print("{any}\n", .{ent.value_ptr.*});
+            const box = ent.value_ptr.*;
+            var inner = self.jboxes.iterator();
+            var conn = Connection{
+                .from = box.id,
+            };
+            while (inner.next()) |other| {
+                const box2 = other.value_ptr.*;
+
+                if (conn.from == box2.id) continue;
+                const dist = box.distance(box2);
+                if (dist < conn.len) {
+                    conn.to = box2.id;
+                    conn.len = dist;
+                }
+            }
+
+            if (self.connections.get(conn) != null or self.connections.get(conn.swapped()) != null) continue;
+            try self.connections.put(conn, conn);
         }
     }
 };
@@ -185,7 +192,11 @@ test "playground" {
 
     try tst.expectEqual(20, p.jboxes.values().len);
 
-    try p.connect();
+    try p.connectBoxes();
+    var iter = p.connections.valueIterator();
+    while (iter.next()) |conn| {
+        std.debug.print("Connection: {any}\n", .{conn});
+    }
 }
 
 test "part 1" {
