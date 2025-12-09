@@ -7,6 +7,28 @@ const math = std.math;
 pub const Coord = struct {
     x: usize,
     y: usize,
+
+    pub fn distance(self: Coord, other: Coord, comptime T: type) T {
+        std.debug.assert(@typeInfo(T) == .float);
+        const x1: T = @as(T, @floatFromInt(self.x));
+        const x2: T = @as(T, @floatFromInt(other.x));
+        const y1: T = @as(T, @floatFromInt(self.y));
+        const y2: T = @as(T, @floatFromInt(other.y));
+        const dx = x1 - x2;
+        const dy = y1 - y2;
+        return @sqrt(dx * dx + dy * dy);
+    }
+
+    pub fn calcArea(self: Coord, other: Coord, comptime T: type) T {
+        std.debug.assert(@typeInfo(T) == .float);
+        const x1: T = @as(T, @floatFromInt(self.x));
+        const x2: T = @as(T, @floatFromInt(other.x));
+        const y1: T = @as(T, @floatFromInt(self.y));
+        const y2: T = @as(T, @floatFromInt(other.y));
+        const dx = @abs(x2 - x1) + 1; // account for cell 'width'
+        const dy = @abs(y2 - y1) + 1; // account for cell 'height'
+        return dx * dy;
+    }
 };
 
 pub fn CreateGrid(comptime CellType: type) type {
