@@ -11,12 +11,10 @@ pub const data = @embedFile("data/day09.txt");
 pub const DayNumber = 9;
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator; // autofix
-    _ = input; // autofix
-    var f = Floor.init(tst.allocator);
+    var f = Floor.init(allocator);
     defer f.deinit();
 
-    var iter = std.mem.splitScalar(u8, test_input, '\n');
+    var iter = std.mem.splitScalar(u8, input, '\n');
     while (iter.next()) |line| {
         try f.addCoordStr(line);
     }
@@ -45,7 +43,7 @@ const Floor = struct {
     const Area = struct {
         from: *const util.grid.Coord,
         to: *const util.grid.Coord,
-        area: f32,
+        area: f64,
 
         pub fn lessThan(_: @TypeOf({}), self: Area, other: Area) bool {
             return @abs(self.area) < @abs(other.area);
@@ -79,7 +77,7 @@ const Floor = struct {
             const d = Area{
                 .from = last,
                 .to = existing,
-                .area = last.calcArea(existing.*, f32),
+                .area = last.calcArea(existing.*, f64),
             };
             try self.areas.append(self.alloc, d);
             if (self.largest) |lrg| {
@@ -110,7 +108,7 @@ test "floor" {
     }
 
     try tst.expectEqual(8, f.coords.items.len);
-    const d = f.coords.items[0].calcArea(f.coords.items[0], f32);
+    const d = f.coords.items[0].calcArea(f.coords.items[0], f64);
     try tst.expectApproxEqRel(1, d, 0.001);
 
     try tst.expectEqual(50, f.largest.?.area);

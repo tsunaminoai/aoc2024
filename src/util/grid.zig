@@ -27,7 +27,7 @@ pub const Coord = struct {
         const y2: T = @as(T, @floatFromInt(other.y));
         const dx = @abs(x2 - x1) + 1; // account for cell 'width'
         const dy = @abs(y2 - y1) + 1; // account for cell 'height'
-        return dx * dy;
+        return @round(dx * dy);
     }
 };
 
