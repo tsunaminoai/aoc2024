@@ -4,6 +4,11 @@ const Allocator = std.mem.Allocator;
 const tst = std.testing;
 const math = std.math;
 
+pub const Coord = struct {
+    x: usize,
+    y: usize,
+};
+
 pub fn CreateGrid(comptime CellType: type) type {
     return struct {
         width: usize = 0,
@@ -14,10 +19,6 @@ pub fn CreateGrid(comptime CellType: type) type {
         beams: usize = 0,
         splits: usize = 0,
         memos: Memos,
-        const Coord = struct {
-            x: usize,
-            y: usize,
-        };
 
         const Grid = @This();
 
