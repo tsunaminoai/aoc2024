@@ -44,9 +44,37 @@ const Floor = struct {
         from: *const util.grid.Coord,
         to: *const util.grid.Coord,
         area: f64,
+        hasColor: bool = false,
+
+        fn left(self: Area) usize {
+            return @min(self.from.x, self.to.x);
+        }
+        fn right(self: Area) usize {
+            return @max(self.from.x, self.to.x);
+        }
+        fn top(self: Area) usize {
+            return @min(self.from.y, self.to.y);
+        }
+        fn bottom(self: Area) usize {
+            return @max(self.from.y, self.to.y);
+        }
+        pub fn midPoint(self: Area) util.grid.Coord {
+            return .{
+                .x = @divFloor(self.right() - self.left(), 2),
+                .y = @divFloor(self.bottom() - self.top(), 2),
+            };
+        }
 
         pub fn lessThan(_: @TypeOf({}), self: Area, other: Area) bool {
             return @abs(self.area) < @abs(other.area);
+        }
+
+        pub fn contains(self: Area, coord: util.grid.Coord) bool {
+            if (coord.x >= self.left() and coord.x <= self.right() and
+                coord.y >= self.top() and coord.y <= self.bottom())
+                return true;
+
+            return false;
         }
     };
 
@@ -74,16 +102,30 @@ const Floor = struct {
 
         const last = &self.coords.items[lastIdx];
         for (self.coords.items[0..lastIdx]) |*existing| {
-            const d = Area{
+            var d = Area{
                 .from = last,
                 .to = existing,
                 .area = last.calcArea(existing.*, f64),
             };
+            for (self.areas.items) |area| {
+                if (area.contains(d.midPoint()))
+                    d.hasColor = true;
+            }
             try self.areas.append(self.alloc, d);
             if (self.largest) |lrg| {
                 if (d.area > lrg.area) self.largest = d;
             } else self.largest = self.areas.getLast();
         }
+    }
+
+    pub fn findLargestConstrained(self: Floor) !Area {
+        var large: Area = undefined;
+        for (self.areas.items, 0..) |c1, i| {
+            _ = i; // autofix
+            if (!c1.hasColor) continue;
+            if (c1.area > large.area) large = c1;
+        }
+        return large;
     }
 };
 
@@ -110,8 +152,14 @@ test "floor" {
     try tst.expectEqual(8, f.coords.items.len);
     const d = f.coords.items[0].calcArea(f.coords.items[0], f64);
     try tst.expectApproxEqRel(1, d, 0.001);
+    try tst.expect(f.areas.items[0].contains(f.coords.items[0]));
+    try tst.expect(!f.areas.items[0].contains(f.coords.getLast()));
 
     try tst.expectEqual(50, f.largest.?.area);
+
+    const c = try f.findLargestConstrained();
+    std.debug.print("{any}\n", .{c});
+    try tst.expectApproxEqRel(24, c.area, 0.001);
 }
 
 test "part 1" {
