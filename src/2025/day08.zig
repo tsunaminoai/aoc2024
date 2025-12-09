@@ -50,11 +50,11 @@ const Position = struct {
     y: i64 = 0,
     z: i64 = 0,
     pub fn distance(self: Position, other: Position) i64 {
-        const xx = self.x * other.x;
-        const yy = self.y * other.y;
-        const zz = self.z * other.z;
+        const xx = self.x - other.x;
+        const yy = self.y - other.y;
+        const zz = self.z - other.z;
 
-        return std.math.sqrt(@as(usize, @intCast(xx + yy + zz)));
+        return std.math.sqrt(@as(usize, @intCast(xx * xx + yy * yy + zz * zz)));
     }
 };
 const Connection = struct {
@@ -67,6 +67,9 @@ const Connection = struct {
             .from = self.to,
             .len = self.len,
         };
+    }
+    fn lessThan(_: @TypeOf(void), self: Connection, other: Connection) bool {
+        return self.len < other.len;
     }
 };
 const JunctionBox = struct {
@@ -123,6 +126,7 @@ const Playground = struct {
     /// they become part of the same circuit. After connecting them, there is a single circuit which
     /// contains two junction boxes, and the remaining 18 junction boxes remain in their own individual
     ///  circuits.
+    ///
     /// Now, the two junction boxes which are closest together but aren't already directly connected
     ///  are 162,817,812 and 431,825,988. After connecting them, since 162,817,812 is already connected
     ///  to another junction box, there is now a single circuit which contains three junction boxes and
