@@ -8,5 +8,6 @@
     "markdown": false,
     "scminput": false,
     "zig": false
-  }
+  },
+  "idf.pythonInstallPath": "/usr/bin/python3"
 }
