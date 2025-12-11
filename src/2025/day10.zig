@@ -7,8 +7,8 @@ const tst = std.testing;
 const math = std.math;
 
 // Automatically embedded at compile time
-pub const data = @embedFile("data/day01.txt");
-pub const DayNumber = 1;
+pub const data = @embedFile("data/day10.txt");
+pub const DayNumber = 10;
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var result: usize = 0;
@@ -16,10 +16,14 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     var lines = std.mem.tokenizeScalar(u8, input, '\n');
     while (lines.next()) |line| {
-        var machine = try Machine.init(allocator, line);
+        if (line.len == 0) continue;
+        var machine = Machine.init(allocator, line) catch |e| {
+            std.debug.print("Failed parsing '{s}'\n{}\n", .{ line, e });
+            return e;
+        };
         defer machine.deinit();
         const presses = try machine.minPresses();
-        std.debug.print("Machine {}: {} presses\n", .{ i, presses });
+        // std.debug.print("Machine {}: {} presses\n", .{ i, presses });
         i += 1;
         result += presses;
     }
@@ -267,15 +271,15 @@ const test_input =
 test "machine" {
     var m = try Machine.init(tst.allocator, "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1)");
     defer m.deinit();
-    std.debug.print("{b:0>8}\n", .{m.lights.mask});
+    // std.debug.print("{b:0>8}\n", .{m.lights.mask});
     try tst.expectEqual(0b0000, m.lights.mask);
     try tst.expectEqual(0b0110, m.goal.mask);
     try tst.expectError(error.ExpensiveNoises, m.start());
     m.pushButton(0);
-    std.debug.print("{b:0>8}\n", .{m.lights.mask});
+    // std.debug.print("{b:0>8}\n", .{m.lights.mask});
     try tst.expectEqual(0b1000, m.lights.mask);
     const sol = try m.minPresses();
-    std.debug.print("{}\n", .{sol});
+    // std.debug.print("{}\n", .{sol});
     try tst.expectEqual(2, sol);
 }
 
