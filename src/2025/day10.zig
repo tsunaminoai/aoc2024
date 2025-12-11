@@ -125,12 +125,12 @@ const Machine = struct {
             // check which buttons affect the light
             for (self.btn_diagrams.items, 0..) |btn, btnIdx| {
                 if (btn.isSet(lightIdx))
-                    row.toggle(btnIdx);
+                    row.set(btnIdx);
             }
 
             // add the goal state
             if (self.goal.isSet(lightIdx))
-                row.toggle(m);
+                row.set(m);
 
             mat[lightIdx] = row;
         }
@@ -138,6 +138,10 @@ const Machine = struct {
         var pivot_col: usize = 0;
         var pivot_row: usize = 0;
 
+        // Track which columns have pivots
+        var pivot_cols = LightSet.initEmpty();
+
+        // Gaussian elimination
         while (pivot_col < m and pivot_row < self.numLights) {
             // find pivot
             var found_pivot = false;
@@ -158,6 +162,7 @@ const Machine = struct {
                 pivot_col += 1;
                 continue;
             }
+            pivot_cols.set(pivot_col);
 
             // eXORterminate
             for (0..self.numLights) |row| {
@@ -185,39 +190,72 @@ const Machine = struct {
             }
         }
 
-        // back subtitution to find solution
-        var solution: LightSet = .initEmpty();
-        var i: usize = self.numLights;
-        while (i > 0) {
-            i -= 1;
-            const row = mat[i];
+        // Collect free variables (columns without pivots)
+        var free_vars = try self.alloc.alloc(usize, m);
+        defer self.alloc.free(free_vars);
+        var num_free: usize = 0;
+        for (0..m) |col| {
+            if (!pivot_cols.isSet(col)) {
+                free_vars[num_free] = col;
+                num_free += 1;
+            }
+        }
 
-            // find leading variable (first set button in this row)
-            var lead_col: ?usize = null;
-            for (0..m) |col| {
-                if (row.isSet(col)) {
-                    lead_col = col;
-                    break;
+        // Try all combinations of free variables to find minimum
+        var min_presses: usize = m + 1;
+        const num_combinations: usize = @as(usize, 1) << @intCast(num_free);
+
+        for (0..num_combinations) |combo| {
+            var solution = LightSet.initEmpty();
+
+            // Set free variables according to this combination
+            for (0..num_free) |i| {
+                if ((combo & (@as(usize, 1) << @intCast(i))) != 0) {
+                    solution.set(free_vars[i]);
                 }
             }
 
-            if (lead_col) |col| {
-                // Start with the goal bit for this row
-                var val = row.isSet(m);
+            // Back substitution for pivot variables
+            var row_idx: usize = self.numLights;
+            while (row_idx > 0) {
+                row_idx -= 1;
+                const row = mat[row_idx];
 
-                // XOR with already determined button values
-                for (col + 1..m) |j| {
-                    if (row.isSet(j) and solution.isSet(j)) {
-                        val = !val; // XOR operation
+                // find leading variable (first set button in this row)
+                var lead_col: ?usize = null;
+                for (0..m) |col| {
+                    if (row.isSet(col)) {
+                        lead_col = col;
+                        break;
                     }
                 }
 
-                if (val) {
-                    solution.set(col);
+                if (lead_col) |col| {
+                    // Start with the goal bit for this row
+                    var val = row.isSet(m);
+
+                    // XOR with already determined button values
+                    for (col + 1..m) |j| {
+                        if (row.isSet(j) and solution.isSet(j)) {
+                            val = !val;
+                        }
+                    }
+
+                    if (val)
+                        solution.set(col)
+                    else
+                        solution.unset(col);
                 }
             }
+
+            // Count presses for this solution
+            const presses = solution.count();
+            if (presses < min_presses) {
+                min_presses = presses;
+            }
         }
-        return solution.count();
+
+        return min_presses;
     }
 };
 
