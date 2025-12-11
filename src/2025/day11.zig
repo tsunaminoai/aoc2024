@@ -33,10 +33,15 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
         try s.readLine(line);
     }
 
-    const paths = try s.findAllPaths("svr", "fft");
-    _ = paths; // autofix
-    ret += 1;
-    ret -= 1;
+    const paths = try s.findAllPaths("svr", "out");
+    const dac = s.nodes.get("dac").?;
+    const fft = s.nodes.get("fft").?;
+
+    for (paths.items) |path| {
+        if (std.mem.count(Servers.Connection, path.items, &.{dac}) == 0) continue;
+        if (std.mem.count(Servers.Connection, path.items, &.{fft}) == 0) continue;
+        ret += 1;
+    }
     return @intCast(ret);
 }
 
@@ -109,6 +114,7 @@ pub const Servers = struct {
         target: Connection,
         ret: *Array(Array(Connection)),
     ) !void {
+        if (std.mem.indexOfScalar(Connection, path.items, source) != null) return;
         // std.debug.print(" [] => ", .{});
         try path.append(self.arena.allocator(), source);
         if (source == target) {
@@ -142,6 +148,22 @@ const test_input =
     \\hhh: ccc fff iii
     \\iii: out
 ;
+const test_input_2 =
+    \\svr: aaa bbb
+    \\aaa: fft
+    \\fft: ccc
+    \\bbb: tty
+    \\tty: ccc
+    \\ccc: ddd eee
+    \\ddd: hub
+    \\hub: fff
+    \\eee: dac
+    \\dac: fff
+    \\fff: ggg hhh
+    \\ggg: out
+    \\hhh: out
+    \\hhh: eee
+;
 
 test "part 1" {
     const example = test_input;
@@ -151,7 +173,7 @@ test "part 1" {
 }
 
 test "part 2" {
-    const example = test_input;
+    const example = test_input_2;
 
     const result = try part2(std.testing.allocator, example);
     try std.testing.expectEqual(@as(i64, 2), result);
