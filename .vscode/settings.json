@@ -8,5 +8,14 @@
     "markdown": false,
     "scminput": false,
     "zig": false
-  }
+  },
+  "terminal.integrated.profiles.osx": {
+    "devboxCompatibleShell": {
+      "path": "/run/current-system/sw/bin/fish",
+      "args": [
+        "--no-config"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "devboxCompatibleShell"
 }
