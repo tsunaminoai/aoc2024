@@ -18,7 +18,7 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     while (lines.next()) |line| {
         try s.readLine(line);
     }
-    const paths = try s.findAllPaths();
+    const paths = try s.findAllPaths("you", "out");
 
     return @intCast(paths.items.len);
 }
@@ -86,14 +86,14 @@ pub const Servers = struct {
         return entry.value_ptr.*;
     }
 
-    pub fn findAllPaths(self: *Servers) !Array(Array(Connection)) {
+    pub fn findAllPaths(self: *Servers, from: []const u8, to: []const u8) !Array(Array(Connection)) {
         var ret = Array(Array(Connection)){};
         var current = Array(Connection){};
         defer current.deinit(self.arena.allocator());
         try self.dfs(
             &current,
-            self.root.?,
-            self.out.?,
+            self.nodes.get(from) orelse return error.IdNotFound,
+            self.nodes.get(to) orelse return error.IdNotFound,
             &ret,
         );
         return ret;
@@ -141,10 +141,8 @@ const test_input =
 
 test "part 1" {
     const example = test_input;
-    var arena = std.heap.ArenaAllocator.init(tst.allocator);
-    defer arena.deinit();
 
-    const result = try part1(arena.allocator(), example);
+    const result = try part1(tst.allocator, example);
     try std.testing.expectEqual(@as(i64, 5), result);
 }
 
