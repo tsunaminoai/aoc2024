@@ -11,7 +11,6 @@ pub const data = @embedFile("data/day11.txt");
 pub const DayNumber = 11;
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    const result: i64 = 0;
     var s = Servers.init(allocator);
     defer s.deinit();
 
@@ -19,11 +18,9 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     while (lines.next()) |line| {
         try s.readLine(line);
     }
-    for (s.nodes.keys()) |ent| {
-        std.debug.print("{s}\n", .{ent});
-    }
+    const paths = try s.findAllPaths();
 
-    return result;
+    return @intCast(paths.items.len);
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
@@ -40,53 +37,92 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
 }
 
 pub const Servers = struct {
-    root: ?Node = null,
-    out: ?Node = null,
-    nodes: std.StringArrayHashMap(Node),
-    alloc: Allocator,
+    root: ?Connection = null,
+    out: ?Connection = null,
+    nodes: std.StringArrayHashMap(*Node),
+    arena: std.heap.ArenaAllocator,
 
-    pub const Connection = Node;
+    pub const Connection = *const Node;
     pub const Node = struct {
         connections: Array(Connection) = .{},
     };
 
     pub fn init(alloc: Allocator) Servers {
         return .{
-            .alloc = alloc,
             .nodes = .init(alloc),
+            .arena = .init(alloc),
         };
     }
     pub fn deinit(self: *Servers) void {
         self.nodes.deinit();
+        self.arena.deinit();
     }
 
     pub fn readLine(self: *Servers, line: []const u8) !void {
         const delim = std.mem.indexOfScalar(u8, line, ':') orelse return error.InvalidInput;
         const nodeId = line[0..delim];
-        var newNode = try self.getOrMakeNode(nodeId);
+        const sourceNode = try self.getOrMakeNode(nodeId);
         var iter = std.mem.tokenizeScalar(u8, line[delim + 2 ..], ' ');
         while (iter.next()) |connectedNodeId| {
             // std.debug.print("Connecting {s} => {s}\n", .{ nodeId, connectedNodeId });
-            const mentionedNode = try self.getOrMakeNode(connectedNodeId);
-            try newNode.connections.append(self.alloc, mentionedNode);
+            const targetNode = try self.getOrMakeNode(connectedNodeId);
+            try sourceNode.connections.append(self.arena.allocator(), targetNode);
         }
     }
 
-    pub fn getOrMakeNode(self: *Servers, id: []const u8) !Node {
-        const newNode = try self.nodes.getOrPut(id);
-        if (!newNode.found_existing) {
-            if (std.mem.eql(u8, id, "you")) {
-                // std.debug.print("Root Set to {s}\n", .{id});
-                self.root = newNode.value_ptr.*;
-            }
-            if (std.mem.eql(u8, id, "out")) {
-                // std.debug.print("Out Set to {s}\n", .{id});
-                self.out = newNode.value_ptr.*;
-            }
-            newNode.value_ptr.* = Node{};
+    pub fn getOrMakeNode(self: *Servers, id: []const u8) !*Node {
+        const entry = try self.nodes.getOrPut(id);
+        if (!entry.found_existing) {
+            const newNodePtr = try self.arena.allocator().create(Node);
+            newNodePtr.* = .{};
+            entry.value_ptr.* = newNodePtr;
+            if (std.mem.eql(u8, id, "you"))
+                self.root = newNodePtr;
+
+            if (std.mem.eql(u8, id, "out"))
+                self.out = newNodePtr;
         }
 
-        return newNode.value_ptr.*;
+        return entry.value_ptr.*;
+    }
+
+    pub fn findAllPaths(self: *Servers) !Array(Array(Connection)) {
+        var ret = Array(Array(Connection)){};
+        var current = Array(Connection){};
+        defer current.deinit(self.arena.allocator());
+        try self.dfs(
+            &current,
+            self.root.?,
+            self.out.?,
+            &ret,
+        );
+        return ret;
+    }
+    fn dfs(
+        self: *Servers,
+        path: *Array(Connection),
+        source: Connection,
+        target: Connection,
+        ret: *Array(Array(Connection)),
+    ) !void {
+        // std.debug.print(" [] => ", .{});
+        try path.append(self.arena.allocator(), source);
+        if (source == target) {
+            // save path
+            try ret.append(
+                self.arena.allocator(),
+                try path.clone(self.arena.allocator()),
+            );
+            // std.debug.print("hit!\n", .{});
+        } else {
+            // recurse connections
+            for (source.connections.items) |conn|
+                try self.dfs(path, conn, target, ret);
+        }
+
+        // backtrack
+        _ = path.pop();
+        // std.debug.print("backtrack < \n", .{});
     }
 };
 
@@ -109,8 +145,7 @@ test "part 1" {
     defer arena.deinit();
 
     const result = try part1(arena.allocator(), example);
-    _ = result; // autofix
-    // try std.testing.expectEqual(@as(i64, 5), result);
+    try std.testing.expectEqual(@as(i64, 5), result);
 }
 
 test "part 2" {
