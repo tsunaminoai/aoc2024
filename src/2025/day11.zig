@@ -24,16 +24,20 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator; // autofix
-    const result: i64 = 0;
+    var ret: i64 = 0;
+    var s = Servers.init(allocator);
+    defer s.deinit();
 
     var lines = std.mem.tokenizeScalar(u8, input, '\n');
     while (lines.next()) |line| {
-        _ = line; // autofix
-        // Your solution here
+        try s.readLine(line);
     }
 
-    return result;
+    const paths = try s.findAllPaths("svr", "fft");
+    _ = paths; // autofix
+    ret += 1;
+    ret -= 1;
+    return @intCast(ret);
 }
 
 pub const Servers = struct {
@@ -150,5 +154,5 @@ test "part 2" {
     const example = test_input;
 
     const result = try part2(std.testing.allocator, example);
-    try std.testing.expectEqual(@as(i64, 0), result);
+    try std.testing.expectEqual(@as(i64, 2), result);
 }
