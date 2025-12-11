@@ -18,13 +18,11 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     while (lines.next()) |line| {
         try s.readLine(line);
     }
-    const paths = try s.findAllPaths("you", "out");
 
-    return @intCast(paths.items.len);
+    return @intCast(try s.countPaths("you", "out", &.{}));
 }
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    var ret: i64 = 0;
     var s = Servers.init(allocator);
     defer s.deinit();
 
@@ -33,16 +31,10 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
         try s.readLine(line);
     }
 
-    const paths = try s.findAllPaths("svr", "out");
     const dac = s.nodes.get("dac").?;
     const fft = s.nodes.get("fft").?;
 
-    for (paths.items) |path| {
-        if (std.mem.count(Servers.Connection, path.items, &.{dac}) == 0) continue;
-        if (std.mem.count(Servers.Connection, path.items, &.{fft}) == 0) continue;
-        ret += 1;
-    }
-    return @intCast(ret);
+    return @intCast(try s.countPaths("svr", "out", &.{ fft, dac }));
 }
 
 pub const Servers = struct {
@@ -95,43 +87,50 @@ pub const Servers = struct {
         return entry.value_ptr.*;
     }
 
-    pub fn findAllPaths(self: *Servers, from: []const u8, to: []const u8) !Array(Array(Connection)) {
-        var ret = Array(Array(Connection)){};
+    pub fn countPaths(
+        self: *Servers,
+        from: []const u8,
+        to: []const u8,
+        must_visit: []const Connection,
+    ) !usize {
         var current = Array(Connection){};
         defer current.deinit(self.arena.allocator());
-        try self.dfs(
+        return try self.dfs(
             &current,
             self.nodes.get(from) orelse return error.IdNotFound,
             self.nodes.get(to) orelse return error.IdNotFound,
-            &ret,
+            must_visit,
         );
-        return ret;
     }
     fn dfs(
         self: *Servers,
         path: *Array(Connection),
         source: Connection,
         target: Connection,
-        ret: *Array(Array(Connection)),
-    ) !void {
-        if (std.mem.indexOfScalar(Connection, path.items, source) != null) return;
-        // std.debug.print(" [] => ", .{});
+        must_visit: []const Connection,
+    ) !usize {
+        if (std.mem.indexOfScalar(Connection, path.items, source) != null) return 0;
         try path.append(self.arena.allocator(), source);
+        var count: usize = 0;
         if (source == target) {
             // save path
-            try ret.append(
-                self.arena.allocator(),
-                try path.clone(self.arena.allocator()),
-            );
-            // std.debug.print("hit!\n", .{});
+            var all_found = true;
+            for (must_visit) |req| {
+                if (std.mem.indexOfScalar(Connection, path.items, req) == null) {
+                    all_found = false;
+                    break;
+                }
+            }
+            if (all_found) count = 1;
         } else {
             // recurse connections
             for (source.connections.items) |conn|
-                try self.dfs(path, conn, target, ret);
+                count += try self.dfs(path, conn, target, must_visit);
         }
 
         // backtrack
         _ = path.pop();
+        return count;
         // std.debug.print("backtrack < \n", .{});
     }
 };
