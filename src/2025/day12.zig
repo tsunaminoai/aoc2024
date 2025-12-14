@@ -10,6 +10,8 @@ const math = std.math;
 pub const data = @embedFile("data/day12.txt");
 pub const DayNumber = 12;
 
+const GridSize = 3;
+
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     _ = allocator; // autofix
     const result: i64 = 0;
@@ -49,12 +51,12 @@ const PresentShape = struct {
         return .{};
     }
 
-    pub fn addCell(self: *PresentShape, row: u8, col: u8) void {
+    pub fn addCell(self: *PresentShape, row: anytype, col: anytype) void {
         self.cells.set(@intCast((row * 8) + col));
-        self.width = @max(self.width, col + 1);
-        self.height = @max(self.height, row + 1);
+        self.width = @max(self.width, @as(u8, @intCast(col + 1)));
+        self.height = @max(self.height, @as(u8, @intCast(row + 1)));
     }
-    pub fn hasCell(self: PresentShape, row: u8, col: u8) bool {
+    pub fn hasCell(self: PresentShape, row: anytype, col: anytype) bool {
         if (row >= 8 or col >= 8) return false;
         return self.cells.isSet(@intCast((row * 8) + col));
     }
@@ -65,7 +67,7 @@ const PresentShape = struct {
         var min_c: u8 = 8;
         for (0..self.height) |row| {
             for (0..self.width) |col| {
-                if (self.hasCell(@as(u8, @intCast(row)), @as(u8, @intCast(col)))) {
+                if (self.hasCell(row, col)) {
                     min_r = @min(min_r, @as(u8, @intCast(row)));
                     min_c = @min(min_c, @as(u8, @intCast(col)));
                 }
@@ -75,7 +77,7 @@ const PresentShape = struct {
 
         for (0..self.height) |row| {
             for (0..self.width) |col| {
-                if (self.hasCell(@as(u8, @intCast(row)), @as(u8, @intCast(col)))) {
+                if (self.hasCell(row, col)) {
                     norm.addCell(
                         @as(u8, @intCast(row)) - min_r,
                         @as(u8, @intCast(col)) - min_c,
